@@ -4,6 +4,9 @@ import {
   getTimesForDate,
   CARD_KEYS,
   CARD_LABELS,
+  CITY_OFFSETS,
+  CITY_LABELS,
+  type CityKey,
   type DayTimes,
 } from "@/lib/prayer-data";
 
@@ -12,6 +15,8 @@ type Offsets = Record<keyof DayTimes, number>;
 const ZERO_OFFSETS: Offsets = {
   imsaku: 0, sabahu: 0, lindja: 0, dreka: 0, ikindia: 0, akshami: 0, jacia: 0,
 };
+
+const CITY_KEY = "vaktia-city-v1";
 
 const STORAGE_KEY = "vaktia-offsets-v1";
 

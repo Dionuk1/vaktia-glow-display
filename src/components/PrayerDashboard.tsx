@@ -248,12 +248,16 @@ export default function PrayerDashboard() {
 
 function SettingsModal({
   offsets,
+  city,
   onClose,
   onChange,
+  onCityChange,
 }: {
   offsets: Offsets;
+  city: CityKey;
   onClose: () => void;
   onChange: (o: Offsets) => void;
+  onCityChange: (c: CityKey) => void;
 }) {
   const adjust = (k: keyof Offsets, delta: number) => {
     const next = { ...offsets, [k]: Math.max(-30, Math.min(30, offsets[k] + delta)) };

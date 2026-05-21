@@ -153,7 +153,7 @@ export default function PrayerDashboard() {
           <div className="order-2 flex flex-col items-center gap-1 text-center sm:order-1 sm:items-start sm:text-left">
             <div className="flex items-center gap-2 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
               <MapPin className="size-3 sm:size-[1.8vh]" />
-              Prishtinë, Kosovë
+              {CITY_LABELS[city]}, Kosovë · BIK
             </div>
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}

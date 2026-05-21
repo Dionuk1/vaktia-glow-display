@@ -230,10 +230,15 @@ export default function PrayerDashboard() {
       {showSettings && (
         <SettingsModal
           offsets={offsets}
+          city={city}
           onClose={() => setShowSettings(false)}
           onChange={(o) => {
             setOffsets(o);
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); } catch {}
+          }}
+          onCityChange={(c) => {
+            setCity(c);
+            try { localStorage.setItem(CITY_KEY, c); } catch {}
           }}
         />
       )}

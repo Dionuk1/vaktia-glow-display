@@ -282,8 +282,26 @@ function SettingsModal({
             Mbyll
           </button>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Shto ose largo minuta nga koha e secilës falje (±30 min).
+        <div className="mb-5">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            Qyteti
+          </div>
+          <select
+            value={city}
+            onChange={(e) => onCityChange(e.target.value as CityKey)}
+            className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {(Object.keys(CITY_LABELS) as CityKey[]).map((c) => (
+              <option key={c} value={c}>{CITY_LABELS[c]}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground mt-2">
+            Të dhënat zyrtare nga BIK (Takvimi 2026), me korrigjim minutash sipas qytetit.
+          </p>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-3">
+          Rregullimi manual i kohëve (±30 min):
         </p>
         <div className="space-y-2">
           {CARD_KEYS.map((k) => (

@@ -88,19 +88,24 @@ export default function PrayerDashboard() {
   const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
+  const [city, setCity] = useState<CityKey>("Prishtina");
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setOffsets(loadOffsets());
+    try {
+      const c = localStorage.getItem(CITY_KEY) as CityKey | null;
+      if (c && c in CITY_OFFSETS) setCity(c);
+    } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
   const times = useMemo(
-    () => applyOffsets(getTimesForDate(now), offsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), offsets]
+    () => applyOffsets(getTimesForDate(now, city), offsets),
+    [now.getDate(), now.getMonth(), now.getFullYear(), offsets, city]
   );
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
@@ -112,9 +117,9 @@ export default function PrayerDashboard() {
     }
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tTimes = applyOffsets(getTimesForDate(tomorrow), offsets);
+    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), offsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, offsets, now]);
+  }, [times, nowMin, offsets, now, city]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
 

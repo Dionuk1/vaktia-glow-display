@@ -59,7 +59,6 @@ function formatGregorian(d: Date) {
   });
 }
 
-// Simple Hijri approximation
 function formatHijri(d: Date): string {
   try {
     return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
@@ -81,11 +80,15 @@ function formatCountdown(secs: number): string {
 }
 
 export default function PrayerDashboard() {
+  const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
-  const [offsets, setOffsets] = useState<Offsets>(() => loadOffsets());
+  const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setOffsets(loadOffsets());
+    setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -97,13 +100,11 @@ export default function PrayerDashboard() {
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
 
-  // Determine next prayer among CARD_KEYS
   const next = useMemo(() => {
     for (const k of CARD_KEYS) {
       const t = toMin(times[k]);
       if (t > nowMin) return { key: k, minutes: t };
     }
-    // After last prayer → next is tomorrow's first
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tTimes = applyOffsets(getTimesForDate(tomorrow), offsets);
@@ -112,9 +113,13 @@ export default function PrayerDashboard() {
 
   const remainingSecs = (next.minutes - nowMin) * 60;
 
+  if (!mounted) {
+    // Avoid SSR/locale hydration mismatch — render blank shell
+    return <div className="h-screen w-screen bg-background" />;
+  }
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background bg-radial-glow text-foreground">
-      {/* Subtle pattern overlay */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
@@ -124,64 +129,67 @@ export default function PrayerDashboard() {
         }}
       />
 
-      <div className="relative flex h-full w-full flex-col p-[2vh] gap-[2vh]">
+      <div className="relative flex h-full w-full flex-col gap-3 p-3 sm:gap-[2vh] sm:p-[2vh]">
         {/* HEADER */}
-        <header className="flex items-center justify-between rounded-3xl bg-surface/60 backdrop-blur card-glow px-[3vw] py-[2vh]">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
-              <MapPin className="size-[1.8vh]" />
-              Prishtinë, Kosovë
-            </div>
-            <div className="text-[2.4vh] font-medium text-foreground/90 capitalize">
-              {formatGregorian(now)}
-            </div>
-            <div className="text-[1.8vh] text-muted-foreground" dir="rtl">
-              {formatHijri(now)}
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="font-bold tabular-nums leading-none text-foreground text-[14vh] tracking-tight">
+        <header className="flex flex-col gap-3 rounded-3xl bg-surface/60 backdrop-blur card-glow p-4 sm:flex-row sm:items-center sm:justify-between sm:px-[3vw] sm:py-[2vh]">
+          {/* Clock */}
+          <div className="order-1 flex flex-col items-center sm:order-2">
+            <div className="font-bold tabular-nums leading-none text-foreground text-[14vw] sm:text-[14vh] tracking-tight">
               {formatClock(now)}
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1">
-            <div className="text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
+          {/* Location + date */}
+          <div className="order-2 flex flex-col items-center gap-1 text-center sm:order-1 sm:items-start sm:text-left">
+            <div className="flex items-center gap-2 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
+              <MapPin className="size-3 sm:size-[1.8vh]" />
+              Prishtinë, Kosovë
+            </div>
+            <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
+              {formatGregorian(now)}
+            </div>
+            <div className="text-xs sm:text-[1.8vh] text-muted-foreground" dir="rtl">
+              {formatHijri(now)}
+            </div>
+          </div>
+
+          {/* Countdown */}
+          <div className="order-3 flex flex-col items-center gap-1 sm:items-end">
+            <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
               Koha e mbetur
             </div>
-            <div className="text-[2.2vh] text-foreground/80">
+            <div className="text-sm sm:text-[2.2vh] text-foreground/80">
               {CARD_LABELS[next.key]} pas
             </div>
-            <div className="text-[5vh] font-bold tabular-nums leading-none text-primary">
+            <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
               {formatCountdown(remainingSecs)}
             </div>
           </div>
         </header>
 
         {/* GRID */}
-        <main className="grid flex-1 grid-cols-3 grid-rows-2 gap-[2vh]">
+        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-3 gap-3 sm:grid-cols-3 sm:grid-rows-2 sm:gap-[2vh]">
           {CARD_KEYS.map((k) => {
             const isActive = k === next.key;
             return (
               <div
                 key={k}
                 className={[
-                  "relative flex flex-col items-center justify-center rounded-3xl p-[2vh] transition-all duration-500",
+                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[2vh] transition-all duration-500",
                   isActive
                     ? "bg-gradient-to-br from-surface-elevated to-surface card-active"
                     : "bg-surface/70 card-glow",
                 ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-[2vh] right-[2vh] flex items-center gap-2 rounded-full bg-primary/15 px-3 py-1 text-[1.3vh] font-semibold uppercase tracking-widest text-primary">
-                    <span className="size-2 animate-pulse rounded-full bg-primary" />
+                  <div className="absolute top-2 right-2 sm:top-[2vh] sm:right-[2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[1.3vh] font-semibold uppercase tracking-widest text-primary">
+                    <span className="size-1.5 sm:size-2 animate-pulse rounded-full bg-primary" />
                     Tjetra
                   </div>
                 )}
                 <div
                   className={[
-                    "text-[3vh] font-medium uppercase tracking-[0.2em]",
+                    "text-[10px] sm:text-[3vh] font-medium uppercase tracking-[0.2em] text-center px-1",
                     isActive ? "text-primary" : "text-muted-foreground",
                   ].join(" ")}
                 >
@@ -189,7 +197,7 @@ export default function PrayerDashboard() {
                 </div>
                 <div
                   className={[
-                    "mt-[1vh] font-bold tabular-nums leading-none text-[12vh]",
+                    "mt-1 sm:mt-[1vh] font-bold tabular-nums leading-none text-[7vw] sm:text-[12vh]",
                     isActive ? "text-foreground" : "text-foreground/85",
                   ].join(" ")}
                 >
@@ -201,11 +209,10 @@ export default function PrayerDashboard() {
         </main>
       </div>
 
-      {/* Settings */}
       <button
         onClick={() => setShowSettings(true)}
         aria-label="Cilësimet"
-        className="absolute bottom-3 right-3 rounded-full p-2 text-muted-foreground/50 hover:text-foreground hover:bg-surface transition"
+        className="absolute bottom-3 right-3 rounded-full p-2 text-muted-foreground/60 hover:text-foreground hover:bg-surface transition"
       >
         <Settings className="size-5" />
       </button>
@@ -244,7 +251,7 @@ function SettingsModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-3xl bg-surface-elevated p-6 card-glow"
+        className="w-full max-w-lg rounded-3xl bg-surface-elevated p-6 card-glow max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

@@ -4,6 +4,9 @@ import {
   getTimesForDate,
   CARD_KEYS,
   CARD_LABELS,
+  CITY_OFFSETS,
+  CITY_LABELS,
+  type CityKey,
   type DayTimes,
 } from "@/lib/prayer-data";
 
@@ -12,6 +15,8 @@ type Offsets = Record<keyof DayTimes, number>;
 const ZERO_OFFSETS: Offsets = {
   imsaku: 0, sabahu: 0, lindja: 0, dreka: 0, ikindia: 0, akshami: 0, jacia: 0,
 };
+
+const CITY_KEY = "vaktia-city-v1";
 
 const STORAGE_KEY = "vaktia-offsets-v1";
 
@@ -83,19 +88,24 @@ export default function PrayerDashboard() {
   const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
+  const [city, setCity] = useState<CityKey>("Prishtina");
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setOffsets(loadOffsets());
+    try {
+      const c = localStorage.getItem(CITY_KEY) as CityKey | null;
+      if (c && c in CITY_OFFSETS) setCity(c);
+    } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
   const times = useMemo(
-    () => applyOffsets(getTimesForDate(now), offsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), offsets]
+    () => applyOffsets(getTimesForDate(now, city), offsets),
+    [now.getDate(), now.getMonth(), now.getFullYear(), offsets, city]
   );
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
@@ -107,9 +117,9 @@ export default function PrayerDashboard() {
     }
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tTimes = applyOffsets(getTimesForDate(tomorrow), offsets);
+    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), offsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, offsets, now]);
+  }, [times, nowMin, offsets, now, city]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
 
@@ -143,7 +153,7 @@ export default function PrayerDashboard() {
           <div className="order-2 flex flex-col items-center gap-1 text-center sm:order-1 sm:items-start sm:text-left">
             <div className="flex items-center gap-2 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
               <MapPin className="size-3 sm:size-[1.8vh]" />
-              Prishtinë, Kosovë
+              {CITY_LABELS[city]}, Kosovë · BIK
             </div>
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}
@@ -220,10 +230,15 @@ export default function PrayerDashboard() {
       {showSettings && (
         <SettingsModal
           offsets={offsets}
+          city={city}
           onClose={() => setShowSettings(false)}
           onChange={(o) => {
             setOffsets(o);
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); } catch {}
+          }}
+          onCityChange={(c) => {
+            setCity(c);
+            try { localStorage.setItem(CITY_KEY, c); } catch {}
           }}
         />
       )}
@@ -233,12 +248,16 @@ export default function PrayerDashboard() {
 
 function SettingsModal({
   offsets,
+  city,
   onClose,
   onChange,
+  onCityChange,
 }: {
   offsets: Offsets;
+  city: CityKey;
   onClose: () => void;
   onChange: (o: Offsets) => void;
+  onCityChange: (c: CityKey) => void;
 }) {
   const adjust = (k: keyof Offsets, delta: number) => {
     const next = { ...offsets, [k]: Math.max(-30, Math.min(30, offsets[k] + delta)) };
@@ -263,8 +282,26 @@ function SettingsModal({
             Mbyll
           </button>
         </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Shto ose largo minuta nga koha e secilës falje (±30 min).
+        <div className="mb-5">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            Qyteti
+          </div>
+          <select
+            value={city}
+            onChange={(e) => onCityChange(e.target.value as CityKey)}
+            className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {(Object.keys(CITY_LABELS) as CityKey[]).map((c) => (
+              <option key={c} value={c}>{CITY_LABELS[c]}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground mt-2">
+            Të dhënat zyrtare nga BIK (Takvimi 2026), me korrigjim minutash sipas qytetit.
+          </p>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-3">
+          Rregullimi manual i kohëve (±30 min):
         </p>
         <div className="space-y-2">
           {CARD_KEYS.map((k) => (

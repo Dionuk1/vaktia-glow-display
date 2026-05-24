@@ -240,6 +240,7 @@ export default function PrayerDashboard() {
         <SettingsModal
           offsets={offsets}
           city={city}
+          remoteMeta={remoteMeta}
           onClose={() => setShowSettings(false)}
           onChange={(o) => {
             setOffsets(o);
@@ -248,6 +249,10 @@ export default function PrayerDashboard() {
           onCityChange={(c) => {
             setCity(c);
             try { localStorage.setItem(CITY_KEY, c); } catch {}
+          }}
+          onUpdated={(meta) => {
+            setRemoteMeta(meta);
+            setDataVersion((v) => v + 1);
           }}
         />
       )}

@@ -1,7 +1,6 @@
 // Official prayer times sourced from Bashkësia Islame e Kosovës (BIK)
 // Takvimi zyrtar 2026 — pozicioni i diellit përsëritet çdo vit.
 // Source: https://github.com/drilonjaha/kohet-e-namazit-kosove-json
-//         (PDF: https://dituriaislame.com/wp-content/uploads/2026/01/takvimi2026vaktet.pdf)
 // Reference city: Deçan. Apply per-city offset for other locations.
 
 import bikTimes from "./bik-times.json";
@@ -16,9 +15,23 @@ export type DayTimes = {
   jacia: string;
 };
 
-const TIMES = bikTimes as Record<string, DayTimes>;
+const BUNDLED = bikTimes as Record<string, DayTimes>;
+const REMOTE_KEY = "vaktia-bik-remote-v1";
+const REMOTE_META_KEY = "vaktia-bik-remote-meta-v1";
 
-// City offsets in minutes vs. reference city (Deçan)
+let override: Record<string, DayTimes> | null = null;
+
+if (typeof window !== "undefined") {
+  try {
+    const raw = localStorage.getItem(REMOTE_KEY);
+    if (raw) override = JSON.parse(raw);
+  } catch {}
+}
+
+function activeMap(): Record<string, DayTimes> {
+  return override ?? BUNDLED;
+}
+
 export const CITY_OFFSETS = {
   Decan: 0,
   Gjakova: 0,
@@ -60,16 +73,20 @@ function fmtMin(n: number) {
   const m = ((n % 60) + 60) % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+function pad(t: string) {
+  const [h, m] = t.split(":");
+  return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+}
 
 function dateKey(d: Date): string {
   return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function getTimesForDate(date: Date, city: CityKey = "Prishtina"): DayTimes {
+  const map = activeMap();
   let key = dateKey(date);
-  // Feb 29 fallback (data is 365-day, no leap day)
-  if (!TIMES[key]) key = "02-28";
-  const base = TIMES[key];
+  if (!map[key]) key = "02-28";
+  const base = map[key];
   const offset = CITY_OFFSETS[city];
   if (offset === 0) return { ...base };
   const out = {} as DayTimes;
@@ -89,9 +106,10 @@ export const PRAYER_LABELS: Record<keyof DayTimes, string> = {
   jacia: "Jacia",
 };
 
-// 6 cards displayed: Imsaku, Lindja, Dreka, Ikindia, Akshami, Jacia
+// 7 cards displayed (now including Sabahu)
 export const CARD_KEYS: (keyof DayTimes)[] = [
   "imsaku",
+  "sabahu",
   "lindja",
   "dreka",
   "ikindia",
@@ -100,9 +118,78 @@ export const CARD_KEYS: (keyof DayTimes)[] = [
 ];
 export const CARD_LABELS: Record<string, string> = {
   imsaku: "Imsaku",
+  sabahu: "Sabahu",
   lindja: "Lindja e Diellit",
   dreka: "Dreka",
   ikindia: "Ikindia",
   akshami: "Akshami",
   jacia: "Jacia",
 };
+
+// ---------- Remote sync from BIK GitHub mirror ----------
+
+const REMOTE_URL =
+  "https://raw.githubusercontent.com/drilonjaha/kohet-e-namazit-kosove-json/main/kosovo-prayer-times.min.json";
+
+export type RemoteMeta = { updatedAt: string; year?: number; days: number };
+
+export function getRemoteMeta(): RemoteMeta | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(REMOTE_META_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchLatestFromBIK(): Promise<RemoteMeta> {
+  const res = await fetch(REMOTE_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = (await res.json()) as {
+    metadata?: { year?: number };
+    prayer_times: Record<string, Array<Record<string, string | number>>>;
+  };
+
+  const out: Record<string, DayTimes> = {};
+  for (const month of Object.values(json.prayer_times)) {
+    for (const day of month) {
+      const dateStr = String(day.date); // YYYY-MM-DD
+      const [, mm, dd] = dateStr.split("-");
+      const key = `${mm}-${dd}`;
+      out[key] = {
+        imsaku: pad(String(day.imsak)),
+        sabahu: pad(String(day.fajr)),
+        lindja: pad(String(day.sunrise)),
+        dreka: pad(String(day.dhuhr)),
+        ikindia: pad(String(day.asr)),
+        akshami: pad(String(day.maghrib)),
+        jacia: pad(String(day.isha)),
+      };
+    }
+  }
+
+  const days = Object.keys(out).length;
+  if (days < 300) throw new Error("Të dhëna jo të plota");
+
+  const meta: RemoteMeta = {
+    updatedAt: new Date().toISOString(),
+    year: json.metadata?.year,
+    days,
+  };
+
+  override = out;
+  try {
+    localStorage.setItem(REMOTE_KEY, JSON.stringify(out));
+    localStorage.setItem(REMOTE_META_KEY, JSON.stringify(meta));
+  } catch {}
+  return meta;
+}
+
+export function resetToBundled() {
+  override = null;
+  try {
+    localStorage.removeItem(REMOTE_KEY);
+    localStorage.removeItem(REMOTE_META_KEY);
+  } catch {}
+}

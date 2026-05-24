@@ -275,6 +275,136 @@ export default function PrayerDashboard() {
   );
 }
 
+const DAILY_HADITHS = [
+  { ar: "إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ", sq: "Veprat vlerësohen sipas qëllimeve.", src: "Buhariu & Muslimi" },
+  { ar: "مَنْ لَا يَرْحَمُ لَا يُرْحَمُ", sq: "Kush nuk mëshiron, nuk mëshirohet.", src: "Buhariu" },
+  { ar: "الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ", sq: "Musliman është ai prej gjuhës e dorës së të cilit janë të sigurt muslimanët.", src: "Buhariu" },
+  { ar: "الدِّينُ النَّصِيحَةُ", sq: "Feja është këshillë e sinqertë.", src: "Muslimi" },
+  { ar: "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ", sq: "Më i miri prej jush është ai që sillet më mirë me familjen e tij.", src: "Tirmidhiu" },
+  { ar: "الطُّهُورُ شَطْرُ الْإِيمَانِ", sq: "Pastërtia është gjysma e besimit.", src: "Muslimi" },
+  { ar: "لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ", sq: "Askush prej jush nuk beson plotësisht derisa të dojë për vëllanë e tij atë që do për veten.", src: "Buhariu" },
+];
+
+const MONTH_NAMES_SQ = [
+  "Janar","Shkurt","Mars","Prill","Maj","Qershor",
+  "Korrik","Gusht","Shtator","Tetor","Nëntor","Dhjetor",
+];
+
+function ExtraSection({
+  now, city, dataVersion, offsets,
+}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets }) {
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const today = now.getDate();
+
+  const rows = useMemo(
+    () => getMonthTimes(year, month, city).map((r) => ({
+      date: r.date,
+      times: applyOffsets(r.times, offsets),
+    })),
+    [year, month, city, dataVersion, offsets]
+  );
+
+  const hadith = DAILY_HADITHS[(now.getDate() + now.getMonth()) % DAILY_HADITHS.length];
+
+  return (
+    <section id="more" className="relative w-full px-3 py-8 sm:px-[3vw] sm:py-12 space-y-6 sm:space-y-10">
+      {/* Hadith + Qibla cards */}
+      <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
+        <div className="sm:col-span-2 rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">
+            <BookOpen className="size-4" /> Hadithi i ditës
+          </div>
+          <p className="text-xl sm:text-2xl font-semibold leading-snug mb-3" dir="rtl" lang="ar">
+            {hadith.ar}
+          </p>
+          <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
+            “{hadith.sq}”
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">— {hadith.src}</p>
+        </div>
+        <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">
+            <Compass className="size-4" /> Kibla
+          </div>
+          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-primary">127°</div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Drejtimi nga Kosova drejt Qabesë (jug-juglindje).
+          </p>
+          <div className="mt-4 text-sm text-foreground/80">
+            <div className="flex justify-between border-t border-border py-2">
+              <span className="text-muted-foreground">Qyteti</span>
+              <span className="font-medium">{CITY_LABELS[city]}</span>
+            </div>
+            <div className="flex justify-between border-t border-border py-2">
+              <span className="text-muted-foreground">Zona kohore</span>
+              <span className="font-medium">CET (UTC+1)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly table */}
+      <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">
+        <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-border">
+          <div>
+            <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              Orari mujor
+            </div>
+            <div className="text-lg sm:text-xl font-semibold mt-1">
+              {MONTH_NAMES_SQ[month]} {year} · {CITY_LABELS[city]}
+            </div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm sm:text-base">
+            <thead className="text-xs uppercase tracking-wider text-muted-foreground bg-surface/40">
+              <tr>
+                <th className="px-3 py-3 text-left font-medium">Data</th>
+                {CARD_KEYS.map((k) => (
+                  <th key={k} className="px-3 py-3 text-center font-medium">
+                    {CARD_LABELS[k]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const isToday = r.date.getDate() === today;
+                return (
+                  <tr
+                    key={r.date.toISOString()}
+                    className={[
+                      "border-t border-border/60 transition",
+                      isToday ? "bg-primary/10 text-foreground font-semibold" : "text-foreground/85 hover:bg-surface/40",
+                    ].join(" ")}
+                  >
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      {String(r.date.getDate()).padStart(2, "0")}.{String(month + 1).padStart(2, "0")}
+                      <span className="ml-2 text-xs text-muted-foreground capitalize">
+                        {r.date.toLocaleDateString("sq-AL", { weekday: "short" })}
+                      </span>
+                    </td>
+                    {CARD_KEYS.map((k) => (
+                      <td key={k} className="px-3 py-2.5 text-center tabular-nums">
+                        {r.times[k]}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p className="text-center text-xs text-muted-foreground pb-2">
+        Të dhënat zyrtare nga Bashkësia Islame e Kosovës (BIK).
+      </p>
+    </section>
+  );
+}
+
 function SettingsModal({
   offsets,
   city,

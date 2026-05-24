@@ -96,6 +96,16 @@ export function getTimesForDate(date: Date, city: CityKey = "Prishtina"): DayTim
   return out;
 }
 
+export function getMonthTimes(year: number, month: number, city: CityKey = "Prishtina") {
+  const days = new Date(year, month + 1, 0).getDate();
+  const out: { date: Date; times: DayTimes }[] = [];
+  for (let d = 1; d <= days; d++) {
+    const date = new Date(year, month, d);
+    out.push({ date, times: getTimesForDate(date, city) });
+  }
+  return out;
+}
+
 export const PRAYER_LABELS: Record<keyof DayTimes, string> = {
   imsaku: "Imsaku",
   sabahu: "Sabahu",

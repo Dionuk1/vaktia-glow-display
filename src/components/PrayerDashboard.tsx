@@ -183,29 +183,31 @@ export default function PrayerDashboard() {
           </div>
         </header>
 
-        {/* GRID */}
-        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-3 gap-3 sm:grid-cols-3 sm:grid-rows-2 sm:gap-[2vh]">
-          {CARD_KEYS.map((k) => {
+        {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
+        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
+          {CARD_KEYS.map((k, i) => {
             const isActive = k === next.key;
+            const isLast = i === CARD_KEYS.length - 1;
             return (
               <div
                 key={k}
                 className={[
-                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[2vh] transition-all duration-500",
+                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[1.5vh] transition-all duration-500",
+                  isLast ? "col-span-2 sm:col-span-1" : "",
                   isActive
                     ? "bg-gradient-to-br from-surface-elevated to-surface card-active"
                     : "bg-surface/70 card-glow",
                 ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-2 right-2 sm:top-[2vh] sm:right-[2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[1.3vh] font-semibold uppercase tracking-widest text-primary">
-                    <span className="size-1.5 sm:size-2 animate-pulse rounded-full bg-primary" />
+                  <div className="absolute top-2 right-2 sm:top-[1.2vh] sm:right-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-2 sm:py-0.5 text-[9px] sm:text-[1.1vh] font-semibold uppercase tracking-widest text-primary">
+                    <span className="size-1.5 sm:size-1.5 animate-pulse rounded-full bg-primary" />
                     Tjetra
                   </div>
                 )}
                 <div
                   className={[
-                    "text-[10px] sm:text-[3vh] font-medium uppercase tracking-[0.2em] text-center px-1",
+                    "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] text-center px-1",
                     isActive ? "text-primary" : "text-muted-foreground",
                   ].join(" ")}
                 >
@@ -213,7 +215,7 @@ export default function PrayerDashboard() {
                 </div>
                 <div
                   className={[
-                    "mt-1 sm:mt-[1vh] font-bold tabular-nums leading-none text-[7vw] sm:text-[12vh]",
+                    "mt-1 sm:mt-[1.2vh] font-bold tabular-nums leading-none text-[8vw] sm:text-[6.5vh]",
                     isActive ? "text-foreground" : "text-foreground/85",
                   ].join(" ")}
                 >
@@ -223,6 +225,7 @@ export default function PrayerDashboard() {
             );
           })}
         </main>
+
       </div>
 
       <button

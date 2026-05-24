@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle } from "lucide-react";
 import {
   getTimesForDate,
   CARD_KEYS,
   CARD_LABELS,
   CITY_OFFSETS,
   CITY_LABELS,
+  fetchLatestFromBIK,
+  getRemoteMeta,
   type CityKey,
   type DayTimes,
+  type RemoteMeta,
 } from "@/lib/prayer-data";
 
 type Offsets = Record<keyof DayTimes, number>;
@@ -90,10 +93,13 @@ export default function PrayerDashboard() {
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
   const [city, setCity] = useState<CityKey>("Prishtina");
   const [showSettings, setShowSettings] = useState(false);
+  const [dataVersion, setDataVersion] = useState(0);
+  const [remoteMeta, setRemoteMeta] = useState<RemoteMeta | null>(null);
 
   useEffect(() => {
     setMounted(true);
     setOffsets(loadOffsets());
+    setRemoteMeta(getRemoteMeta());
     try {
       const c = localStorage.getItem(CITY_KEY) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
@@ -105,7 +111,7 @@ export default function PrayerDashboard() {
 
   const times = useMemo(
     () => applyOffsets(getTimesForDate(now, city), offsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), offsets, city]
+    [now.getDate(), now.getMonth(), now.getFullYear(), offsets, city, dataVersion]
   );
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
@@ -119,7 +125,7 @@ export default function PrayerDashboard() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tTimes = applyOffsets(getTimesForDate(tomorrow, city), offsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, offsets, now, city]);
+  }, [times, nowMin, offsets, now, city, dataVersion]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
 
@@ -177,29 +183,31 @@ export default function PrayerDashboard() {
           </div>
         </header>
 
-        {/* GRID */}
-        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-3 gap-3 sm:grid-cols-3 sm:grid-rows-2 sm:gap-[2vh]">
-          {CARD_KEYS.map((k) => {
+        {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
+        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
+          {CARD_KEYS.map((k, i) => {
             const isActive = k === next.key;
+            const isLast = i === CARD_KEYS.length - 1;
             return (
               <div
                 key={k}
                 className={[
-                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[2vh] transition-all duration-500",
+                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[1.5vh] transition-all duration-500",
+                  isLast ? "col-span-2 sm:col-span-1" : "",
                   isActive
                     ? "bg-gradient-to-br from-surface-elevated to-surface card-active"
                     : "bg-surface/70 card-glow",
                 ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-2 right-2 sm:top-[2vh] sm:right-[2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[1.3vh] font-semibold uppercase tracking-widest text-primary">
-                    <span className="size-1.5 sm:size-2 animate-pulse rounded-full bg-primary" />
+                  <div className="absolute top-2 right-2 sm:top-[1.2vh] sm:right-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-2 sm:py-0.5 text-[9px] sm:text-[1.1vh] font-semibold uppercase tracking-widest text-primary">
+                    <span className="size-1.5 sm:size-1.5 animate-pulse rounded-full bg-primary" />
                     Tjetra
                   </div>
                 )}
                 <div
                   className={[
-                    "text-[10px] sm:text-[3vh] font-medium uppercase tracking-[0.2em] text-center px-1",
+                    "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] text-center px-1",
                     isActive ? "text-primary" : "text-muted-foreground",
                   ].join(" ")}
                 >
@@ -207,7 +215,7 @@ export default function PrayerDashboard() {
                 </div>
                 <div
                   className={[
-                    "mt-1 sm:mt-[1vh] font-bold tabular-nums leading-none text-[7vw] sm:text-[12vh]",
+                    "mt-1 sm:mt-[1.2vh] font-bold tabular-nums leading-none text-[8vw] sm:text-[6.5vh]",
                     isActive ? "text-foreground" : "text-foreground/85",
                   ].join(" ")}
                 >
@@ -217,6 +225,7 @@ export default function PrayerDashboard() {
             );
           })}
         </main>
+
       </div>
 
       <button
@@ -231,6 +240,7 @@ export default function PrayerDashboard() {
         <SettingsModal
           offsets={offsets}
           city={city}
+          remoteMeta={remoteMeta}
           onClose={() => setShowSettings(false)}
           onChange={(o) => {
             setOffsets(o);
@@ -239,6 +249,10 @@ export default function PrayerDashboard() {
           onCityChange={(c) => {
             setCity(c);
             try { localStorage.setItem(CITY_KEY, c); } catch {}
+          }}
+          onUpdated={(meta) => {
+            setRemoteMeta(meta);
+            setDataVersion((v) => v + 1);
           }}
         />
       )}
@@ -249,20 +263,47 @@ export default function PrayerDashboard() {
 function SettingsModal({
   offsets,
   city,
+  remoteMeta,
   onClose,
   onChange,
   onCityChange,
+  onUpdated,
 }: {
   offsets: Offsets;
   city: CityKey;
+  remoteMeta: RemoteMeta | null;
   onClose: () => void;
   onChange: (o: Offsets) => void;
   onCityChange: (c: CityKey) => void;
+  onUpdated: (meta: RemoteMeta) => void;
 }) {
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [errMsg, setErrMsg] = useState<string>("");
+
   const adjust = (k: keyof Offsets, delta: number) => {
     const next = { ...offsets, [k]: Math.max(-30, Math.min(30, offsets[k] + delta)) };
     onChange(next);
   };
+
+  const handleUpdate = async () => {
+    setStatus("loading");
+    setErrMsg("");
+    try {
+      const meta = await fetchLatestFromBIK();
+      onUpdated(meta);
+      setStatus("ok");
+      setTimeout(() => setStatus("idle"), 2500);
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : "Gabim i panjohur");
+      setStatus("err");
+    }
+  };
+
+  const lastUpdated = remoteMeta
+    ? new Date(remoteMeta.updatedAt).toLocaleString("sq-AL", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+      })
+    : null;
 
   return (
     <div
@@ -282,6 +323,40 @@ function SettingsModal({
             Mbyll
           </button>
         </div>
+
+        <div className="mb-5 rounded-2xl bg-surface p-4 border border-border">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                Të dhënat BIK
+              </div>
+              <div className="text-sm font-medium mt-1">
+                {lastUpdated
+                  ? `Përditësuar: ${lastUpdated}${remoteMeta?.year ? ` (Takvimi ${remoteMeta.year})` : ""}`
+                  : "Po përdoren të dhënat e ndërtuara në app"}
+              </div>
+            </div>
+            <button
+              onClick={handleUpdate}
+              disabled={status === "loading"}
+              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              <RefreshCw className={`size-4 ${status === "loading" ? "animate-spin" : ""}`} />
+              Përditëso nga BIK
+            </button>
+          </div>
+          {status === "ok" && (
+            <div className="flex items-center gap-2 text-xs text-primary mt-2">
+              <Check className="size-3.5" /> Të dhënat u përditësuan me sukses.
+            </div>
+          )}
+          {status === "err" && (
+            <div className="flex items-center gap-2 text-xs text-destructive mt-2">
+              <AlertCircle className="size-3.5" /> Dështoi përditësimi: {errMsg}
+            </div>
+          )}
+        </div>
+
         <div className="mb-5">
           <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
             Qyteti
@@ -296,9 +371,10 @@ function SettingsModal({
             ))}
           </select>
           <p className="text-xs text-muted-foreground mt-2">
-            Të dhënat zyrtare nga BIK (Takvimi 2026), me korrigjim minutash sipas qytetit.
+            Të dhënat zyrtare nga BIK, me korrigjim minutash sipas qytetit.
           </p>
         </div>
+
 
         <p className="text-sm text-muted-foreground mb-3">
           Rregullimi manual i kohëve (±30 min):

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin, RefreshCw, Check, AlertCircle } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, BookOpen, Compass } from "lucide-react";
 import {
   getTimesForDate,
+  getMonthTimes,
   CARD_KEYS,
   CARD_LABELS,
   CITY_OFFSETS,

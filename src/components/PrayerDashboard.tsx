@@ -263,20 +263,47 @@ export default function PrayerDashboard() {
 function SettingsModal({
   offsets,
   city,
+  remoteMeta,
   onClose,
   onChange,
   onCityChange,
+  onUpdated,
 }: {
   offsets: Offsets;
   city: CityKey;
+  remoteMeta: RemoteMeta | null;
   onClose: () => void;
   onChange: (o: Offsets) => void;
   onCityChange: (c: CityKey) => void;
+  onUpdated: (meta: RemoteMeta) => void;
 }) {
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [errMsg, setErrMsg] = useState<string>("");
+
   const adjust = (k: keyof Offsets, delta: number) => {
     const next = { ...offsets, [k]: Math.max(-30, Math.min(30, offsets[k] + delta)) };
     onChange(next);
   };
+
+  const handleUpdate = async () => {
+    setStatus("loading");
+    setErrMsg("");
+    try {
+      const meta = await fetchLatestFromBIK();
+      onUpdated(meta);
+      setStatus("ok");
+      setTimeout(() => setStatus("idle"), 2500);
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : "Gabim i panjohur");
+      setStatus("err");
+    }
+  };
+
+  const lastUpdated = remoteMeta
+    ? new Date(remoteMeta.updatedAt).toLocaleString("sq-AL", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+      })
+    : null;
 
   return (
     <div
@@ -296,6 +323,40 @@ function SettingsModal({
             Mbyll
           </button>
         </div>
+
+        <div className="mb-5 rounded-2xl bg-surface p-4 border border-border">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                Të dhënat BIK
+              </div>
+              <div className="text-sm font-medium mt-1">
+                {lastUpdated
+                  ? `Përditësuar: ${lastUpdated}${remoteMeta?.year ? ` (Takvimi ${remoteMeta.year})` : ""}`
+                  : "Po përdoren të dhënat e ndërtuara në app"}
+              </div>
+            </div>
+            <button
+              onClick={handleUpdate}
+              disabled={status === "loading"}
+              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+            >
+              <RefreshCw className={`size-4 ${status === "loading" ? "animate-spin" : ""}`} />
+              Përditëso nga BIK
+            </button>
+          </div>
+          {status === "ok" && (
+            <div className="flex items-center gap-2 text-xs text-primary mt-2">
+              <Check className="size-3.5" /> Të dhënat u përditësuan me sukses.
+            </div>
+          )}
+          {status === "err" && (
+            <div className="flex items-center gap-2 text-xs text-destructive mt-2">
+              <AlertCircle className="size-3.5" /> Dështoi përditësimi: {errMsg}
+            </div>
+          )}
+        </div>
+
         <div className="mb-5">
           <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
             Qyteti
@@ -310,9 +371,10 @@ function SettingsModal({
             ))}
           </select>
           <p className="text-xs text-muted-foreground mt-2">
-            Të dhënat zyrtare nga BIK (Takvimi 2026), me korrigjim minutash sipas qytetit.
+            Të dhënat zyrtare nga BIK, me korrigjim minutash sipas qytetit.
           </p>
         </div>
+
 
         <p className="text-sm text-muted-foreground mb-3">
           Rregullimi manual i kohëve (±30 min):

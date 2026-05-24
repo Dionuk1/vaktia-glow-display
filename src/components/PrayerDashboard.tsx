@@ -230,13 +230,26 @@ export default function PrayerDashboard() {
 
       </div>
 
-      <button
-        onClick={() => setShowSettings(true)}
-        aria-label="Cilësimet"
-        className="absolute bottom-3 right-3 rounded-full p-2 text-muted-foreground/60 hover:text-foreground hover:bg-surface transition"
-      >
-        <Settings className="size-5" />
-      </button>
+        {/* Scroll cue */}
+        <a
+          href="#more"
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[10px] sm:text-xs uppercase tracking-[0.3em] text-muted-foreground/70 hover:text-foreground transition"
+        >
+          Më shumë
+          <ChevronDown className="size-4 animate-bounce" />
+        </a>
+
+        <button
+          onClick={() => setShowSettings(true)}
+          aria-label="Cilësimet"
+          className="absolute bottom-3 right-3 rounded-full p-2 text-muted-foreground/60 hover:text-foreground hover:bg-surface transition"
+        >
+          <Settings className="size-5" />
+        </button>
+      </div>
+
+      {/* SCROLLABLE EXTRA SECTION */}
+      <ExtraSection now={now} city={city} dataVersion={dataVersion} offsets={offsets} />
 
       {showSettings && (
         <SettingsModal

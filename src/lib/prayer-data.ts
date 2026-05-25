@@ -18,13 +18,20 @@ export type DayTimes = {
 const BUNDLED = bikTimes as Record<string, DayTimes>;
 const REMOTE_KEY = "vaktia-bik-remote-v1";
 const REMOTE_META_KEY = "vaktia-bik-remote-meta-v1";
+const LIVE_KEY = "vaktia-bik-live-v1";
 
 let override: Record<string, DayTimes> | null = null;
+// Today's live times scraped from bislame.net/namazet/ (reference city = Deçan)
+let liveToday: { date: string; times: Partial<DayTimes> } | null = null;
 
 if (typeof window !== "undefined") {
   try {
     const raw = localStorage.getItem(REMOTE_KEY);
     if (raw) override = JSON.parse(raw);
+  } catch {}
+  try {
+    const raw = localStorage.getItem(LIVE_KEY);
+    if (raw) liveToday = JSON.parse(raw);
   } catch {}
 }
 
@@ -82,13 +89,24 @@ function dateKey(d: Date): string {
   return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function isoDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function getTimesForDate(date: Date, city: CityKey = "Prishtina"): DayTimes {
   const map = activeMap();
   let key = dateKey(date);
   if (!map[key]) key = "02-28";
-  const base = map[key];
+  const base = { ...map[key] };
+  // Merge live (Deçan-based) values for today, overriding bundled
+  if (liveToday && liveToday.date === isoDate(date)) {
+    for (const k of Object.keys(liveToday.times) as (keyof DayTimes)[]) {
+      const v = liveToday.times[k];
+      if (v) base[k] = v;
+    }
+  }
   const offset = CITY_OFFSETS[city];
-  if (offset === 0) return { ...base };
+  if (offset === 0) return base;
   const out = {} as DayTimes;
   (Object.keys(base) as (keyof DayTimes)[]).forEach((k) => {
     out[k] = fmtMin(toMin(base[k]) + offset);
@@ -202,4 +220,29 @@ export function resetToBundled() {
     localStorage.removeItem(REMOTE_KEY);
     localStorage.removeItem(REMOTE_META_KEY);
   } catch {}
+}
+
+// ---------- Live "today" sync from bislame.net/namazet/ ----------
+
+export type LiveMeta = { date: string; fetchedAt: string };
+
+export function getLiveToday(): LiveMeta | null {
+  if (!liveToday) return null;
+  return { date: liveToday.date, fetchedAt: new Date().toISOString() };
+}
+
+export async function fetchLiveTodayFromBislame(): Promise<LiveMeta> {
+  const res = await fetch("/api/public/bik-today", { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = (await res.json()) as {
+    date: string | null;
+    fetchedAt: string;
+    times: Partial<DayTimes>;
+  };
+  const date = json.date ?? isoDate(new Date());
+  liveToday = { date, times: json.times };
+  try {
+    localStorage.setItem(LIVE_KEY, JSON.stringify(liveToday));
+  } catch {}
+  return { date, fetchedAt: json.fetchedAt };
 }

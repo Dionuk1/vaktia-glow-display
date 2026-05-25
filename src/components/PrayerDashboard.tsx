@@ -8,6 +8,7 @@ import {
   CITY_OFFSETS,
   CITY_LABELS,
   fetchLatestFromBIK,
+  fetchLiveTodayFromBislame,
   getRemoteMeta,
   type CityKey,
   type DayTimes,
@@ -107,7 +108,19 @@ export default function PrayerDashboard() {
     } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+
+    // Live sync with bislame.net/namazet/ — refresh on mount + every hour
+    const syncLive = () => {
+      fetchLiveTodayFromBislame()
+        .then(() => setDataVersion((v) => v + 1))
+        .catch(() => {});
+    };
+    syncLive();
+    const liveId = setInterval(syncLive, 60 * 60 * 1000);
+    return () => {
+      clearInterval(id);
+      clearInterval(liveId);
+    };
   }, []);
 
   const times = useMemo(

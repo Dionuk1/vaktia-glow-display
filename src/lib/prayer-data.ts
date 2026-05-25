@@ -221,3 +221,28 @@ export function resetToBundled() {
     localStorage.removeItem(REMOTE_META_KEY);
   } catch {}
 }
+
+// ---------- Live "today" sync from bislame.net/namazet/ ----------
+
+export type LiveMeta = { date: string; fetchedAt: string };
+
+export function getLiveToday(): LiveMeta | null {
+  if (!liveToday) return null;
+  return { date: liveToday.date, fetchedAt: new Date().toISOString() };
+}
+
+export async function fetchLiveTodayFromBislame(): Promise<LiveMeta> {
+  const res = await fetch("/api/public/bik-today", { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = (await res.json()) as {
+    date: string | null;
+    fetchedAt: string;
+    times: Partial<DayTimes>;
+  };
+  const date = json.date ?? isoDate(new Date());
+  liveToday = { date, times: json.times };
+  try {
+    localStorage.setItem(LIVE_KEY, JSON.stringify(liveToday));
+  } catch {}
+  return { date, fetchedAt: json.fetchedAt };
+}

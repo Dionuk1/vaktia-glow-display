@@ -18,13 +18,20 @@ export type DayTimes = {
 const BUNDLED = bikTimes as Record<string, DayTimes>;
 const REMOTE_KEY = "vaktia-bik-remote-v1";
 const REMOTE_META_KEY = "vaktia-bik-remote-meta-v1";
+const LIVE_KEY = "vaktia-bik-live-v1";
 
 let override: Record<string, DayTimes> | null = null;
+// Today's live times scraped from bislame.net/namazet/ (reference city = Deçan)
+let liveToday: { date: string; times: Partial<DayTimes> } | null = null;
 
 if (typeof window !== "undefined") {
   try {
     const raw = localStorage.getItem(REMOTE_KEY);
     if (raw) override = JSON.parse(raw);
+  } catch {}
+  try {
+    const raw = localStorage.getItem(LIVE_KEY);
+    if (raw) liveToday = JSON.parse(raw);
   } catch {}
 }
 

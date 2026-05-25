@@ -89,13 +89,24 @@ function dateKey(d: Date): string {
   return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function isoDate(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function getTimesForDate(date: Date, city: CityKey = "Prishtina"): DayTimes {
   const map = activeMap();
   let key = dateKey(date);
   if (!map[key]) key = "02-28";
-  const base = map[key];
+  const base = { ...map[key] };
+  // Merge live (Deçan-based) values for today, overriding bundled
+  if (liveToday && liveToday.date === isoDate(date)) {
+    for (const k of Object.keys(liveToday.times) as (keyof DayTimes)[]) {
+      const v = liveToday.times[k];
+      if (v) base[k] = v;
+    }
+  }
   const offset = CITY_OFFSETS[city];
-  if (offset === 0) return { ...base };
+  if (offset === 0) return base;
   const out = {} as DayTimes;
   (Object.keys(base) as (keyof DayTimes)[]).forEach((k) => {
     out[k] = fmtMin(toMin(base[k]) + offset);

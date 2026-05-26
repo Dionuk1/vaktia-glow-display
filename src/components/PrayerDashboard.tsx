@@ -340,7 +340,7 @@ function ExtraSection({
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">
             <Compass className="size-4" /> Kibla
           </div>
-          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-primary">127°</div>
+          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-primary">137°</div>
           <p className="mt-2 text-sm text-muted-foreground">
             Drejtimi nga Kosova drejt Qabesë (jug-juglindje).
           </p>

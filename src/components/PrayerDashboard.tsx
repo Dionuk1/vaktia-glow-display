@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, BookOpen, Compass } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, BookOpen, Compass, Hand } from "lucide-react";
+import TasbihCounter from "./TasbihCounter";
 import {
   getTimesForDate,
   getMonthTimes,
@@ -356,6 +357,15 @@ function ExtraSection({
           </div>
         </div>
       </div>
+
+      {/* Dhikr / Tasbih counter */}
+      <div>
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
+          <Hand className="size-4" /> Tesbihu pas namazit
+        </div>
+        <TasbihCounter />
+      </div>
+
 
       {/* Monthly table */}
       <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">

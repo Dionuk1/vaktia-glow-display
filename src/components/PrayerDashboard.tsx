@@ -358,6 +358,15 @@ function ExtraSection({
         </div>
       </div>
 
+      {/* Dhikr / Tasbih counter */}
+      <div>
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
+          <Hand className="size-4" /> Tesbihu pas namazit
+        </div>
+        <TasbihCounter />
+      </div>
+
+
       {/* Monthly table */}
       <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">
         <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-border">

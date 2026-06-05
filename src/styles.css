@@ -96,3 +96,19 @@
       0 30px 60px -20px oklch(0 0 0 / 0.5);
   }
 }
+
+@layer utilities {
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary) 40%, transparent),
+                  0 0 20px -2px color-mix(in oklab, var(--color-primary) 30%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 70%, transparent),
+                  0 0 35px 2px color-mix(in oklab, var(--color-primary) 55%, transparent);
+    }
+  }
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}

@@ -95,6 +95,7 @@ export default function PrayerDashboard() {
   const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
+  const [globalOffset, setGlobalOffset] = useState<number>(0);
   const [city, setCity] = useState<CityKey>("Prishtina");
   const [showSettings, setShowSettings] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
@@ -107,6 +108,8 @@ export default function PrayerDashboard() {
     try {
       const c = localStorage.getItem(CITY_KEY) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
+      const g = localStorage.getItem(GLOBAL_OFFSET_KEY);
+      if (g !== null) setGlobalOffset(Number(g) || 0);
     } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -125,12 +128,32 @@ export default function PrayerDashboard() {
     };
   }, []);
 
+  const effectiveOffsets = useMemo<Offsets>(() => {
+    const out = {} as Offsets;
+    (Object.keys(offsets) as (keyof Offsets)[]).forEach((k) => {
+      out[k] = offsets[k] + globalOffset;
+    });
+    return out;
+  }, [offsets, globalOffset]);
+
   const times = useMemo(
-    () => applyOffsets(getTimesForDate(now, city), offsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), offsets, city, dataVersion]
+    () => applyOffsets(getTimesForDate(now, city), effectiveOffsets),
+    [now.getDate(), now.getMonth(), now.getFullYear(), effectiveOffsets, city, dataVersion]
   );
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+  // Active prayer: most recent prayer started within last 20 minutes
+  const activePrayer = useMemo(() => {
+    let active: { key: typeof CARD_KEYS[number]; startedMin: number } | null = null;
+    for (const k of CARD_KEYS) {
+      const t = toMin(times[k]);
+      if (nowMin >= t && nowMin - t <= 20) {
+        active = { key: k, startedMin: t };
+      }
+    }
+    return active;
+  }, [times, nowMin]);
 
   const next = useMemo(() => {
     for (const k of CARD_KEYS) {
@@ -139,16 +162,23 @@ export default function PrayerDashboard() {
     }
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), offsets);
+    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), effectiveOffsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, offsets, now, city, dataVersion]);
+  }, [times, nowMin, effectiveOffsets, now, city, dataVersion]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
+  const isFriday = now.getDay() === 5;
+
+  const updateGlobalOffset = (n: number) => {
+    setGlobalOffset(n);
+    try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
+  };
 
   if (!mounted) {
     // Avoid SSR/locale hydration mismatch — render blank shell
     return <div className="h-screen w-screen bg-background" />;
   }
+
 
   return (
     <div className="relative w-full min-h-screen bg-background bg-radial-glow text-foreground">

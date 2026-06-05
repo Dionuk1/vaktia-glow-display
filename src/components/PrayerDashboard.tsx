@@ -25,6 +25,7 @@ const ZERO_OFFSETS: Offsets = {
 const CITY_KEY = "vaktia-city-v1";
 
 const STORAGE_KEY = "vaktia-offsets-v1";
+const GLOBAL_OFFSET_KEY = "vaktia-global-offset-v1";
 
 function loadOffsets(): Offsets {
   if (typeof window === "undefined") return ZERO_OFFSETS;

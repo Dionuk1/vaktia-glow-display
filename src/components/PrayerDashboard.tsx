@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, BookOpen, Compass, Hand } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, Hand } from "lucide-react";
 import TasbihCounter from "./TasbihCounter";
+import QiblaCompass from "./QiblaCompass";
 import {
   getTimesForDate,
   getMonthTimes,

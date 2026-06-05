@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, BookOpen, Compass, Hand } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, Hand } from "lucide-react";
 import TasbihCounter from "./TasbihCounter";
+import QiblaCompass from "./QiblaCompass";
 import {
   getTimesForDate,
   getMonthTimes,
@@ -378,43 +379,19 @@ function ExtraSection({
     [year, month, city, dataVersion, offsets]
   );
 
-  const hadith = DAILY_HADITHS[(now.getDate() + now.getMonth()) % DAILY_HADITHS.length];
-
   return (
     <section id="more" className="relative w-full px-3 py-8 sm:px-[3vw] sm:py-12 space-y-6 sm:space-y-10">
-      {/* Hadith + Qibla cards */}
-      <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
-        <div className="sm:col-span-2 rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">
-            <BookOpen className="size-4" /> Hadithi i ditës
+      {/* Busulla-Kibla card */}
+      <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <Compass className="size-4" /> Busulla-Kibla
           </div>
-          <p className="text-xl sm:text-2xl font-semibold leading-snug mb-3" dir="rtl" lang="ar">
-            {hadith.ar}
-          </p>
-          <p className="text-base sm:text-lg text-foreground/90 leading-relaxed">
-            “{hadith.sq}”
-          </p>
-          <p className="mt-3 text-xs text-muted-foreground">— {hadith.src}</p>
-        </div>
-        <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3">
-            <Compass className="size-4" /> Kibla
-          </div>
-          <div className="text-4xl sm:text-5xl font-bold tabular-nums text-primary">137°</div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Drejtimi nga Kosova drejt Qabesë (jug-juglindje).
-          </p>
-          <div className="mt-4 text-sm text-foreground/80">
-            <div className="flex justify-between border-t border-border py-2">
-              <span className="text-muted-foreground">Qyteti</span>
-              <span className="font-medium">{CITY_LABELS[city]}</span>
-            </div>
-            <div className="flex justify-between border-t border-border py-2">
-              <span className="text-muted-foreground">Zona kohore</span>
-              <span className="font-medium">CET (UTC+1)</span>
-            </div>
+          <div className="text-xs text-muted-foreground">
+            {CITY_LABELS[city]} · CET
           </div>
         </div>
+        <QiblaCompass />
       </div>
 
       {/* Dhikr / Tasbih counter */}

@@ -364,8 +364,8 @@ const MONTH_NAMES_SQ = [
 ];
 
 function ExtraSection({
-  now, city, dataVersion, offsets,
-}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets }) {
+  now, city, dataVersion, offsets, globalOffset, onGlobalOffsetChange,
+}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets; globalOffset: number; onGlobalOffsetChange: (n: number) => void }) {
   const month = now.getMonth();
   const year = now.getFullYear();
   const today = now.getDate();

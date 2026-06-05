@@ -216,19 +216,47 @@ export default function PrayerDashboard() {
             </div>
           </div>
 
-          {/* Countdown */}
+          {/* Countdown OR active prayer alert */}
           <div className="order-3 flex flex-col items-center gap-1 sm:items-end">
-            <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
-              Koha e mbetur
-            </div>
-            <div className="text-sm sm:text-[2.2vh] text-foreground/80">
-              {CARD_LABELS[next.key]} pas
-            </div>
-            <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
-              {formatCountdown(remainingSecs)}
-            </div>
+            {activePrayer ? (
+              <>
+                <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-primary/80">
+                  {CARD_LABELS[activePrayer.key]}
+                </div>
+                <div className="rounded-2xl px-4 py-2 sm:px-5 sm:py-3 bg-primary/15 ring-1 ring-primary/40 animate-pulse-glow">
+                  <div className="text-base sm:text-[2.6vh] font-bold text-primary leading-tight text-center sm:text-right">
+                    Tani është koha e namazit!
+                  </div>
+                  <div className="text-xs sm:text-[1.6vh] text-primary/80 text-center sm:text-right">
+                    Faluni 🤲
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
+                  Koha e mbetur
+                </div>
+                <div className="text-sm sm:text-[2.2vh] text-foreground/80">
+                  {CARD_LABELS[next.key]} pas
+                </div>
+                <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
+                  {formatCountdown(remainingSecs)}
+                </div>
+              </>
+            )}
           </div>
         </header>
+
+        {isFriday && (
+          <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 ring-1 ring-primary/30 px-4 py-2 text-center text-xs sm:text-sm text-primary/90 backdrop-blur">
+            <span className="size-2 rounded-full bg-primary animate-pulse" />
+            <span className="font-medium">
+              Sot e Xhuma: Ligjërata (Hytbeja) në 12:45 · Namazi në 13:00
+            </span>
+          </div>
+        )}
+
 
         {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
         <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">

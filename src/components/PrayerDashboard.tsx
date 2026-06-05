@@ -25,6 +25,7 @@ const ZERO_OFFSETS: Offsets = {
 const CITY_KEY = "vaktia-city-v1";
 
 const STORAGE_KEY = "vaktia-offsets-v1";
+const GLOBAL_OFFSET_KEY = "vaktia-global-offset-v1";
 
 function loadOffsets(): Offsets {
   if (typeof window === "undefined") return ZERO_OFFSETS;
@@ -94,6 +95,7 @@ export default function PrayerDashboard() {
   const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
+  const [globalOffset, setGlobalOffset] = useState<number>(0);
   const [city, setCity] = useState<CityKey>("Prishtina");
   const [showSettings, setShowSettings] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
@@ -106,6 +108,8 @@ export default function PrayerDashboard() {
     try {
       const c = localStorage.getItem(CITY_KEY) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
+      const g = localStorage.getItem(GLOBAL_OFFSET_KEY);
+      if (g !== null) setGlobalOffset(Number(g) || 0);
     } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -124,12 +128,32 @@ export default function PrayerDashboard() {
     };
   }, []);
 
+  const effectiveOffsets = useMemo<Offsets>(() => {
+    const out = {} as Offsets;
+    (Object.keys(offsets) as (keyof Offsets)[]).forEach((k) => {
+      out[k] = offsets[k] + globalOffset;
+    });
+    return out;
+  }, [offsets, globalOffset]);
+
   const times = useMemo(
-    () => applyOffsets(getTimesForDate(now, city), offsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), offsets, city, dataVersion]
+    () => applyOffsets(getTimesForDate(now, city), effectiveOffsets),
+    [now.getDate(), now.getMonth(), now.getFullYear(), effectiveOffsets, city, dataVersion]
   );
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+  // Active prayer: most recent prayer started within last 20 minutes
+  const activePrayer = useMemo(() => {
+    let active: { key: typeof CARD_KEYS[number]; startedMin: number } | null = null;
+    for (const k of CARD_KEYS) {
+      const t = toMin(times[k]);
+      if (nowMin >= t && nowMin - t <= 20) {
+        active = { key: k, startedMin: t };
+      }
+    }
+    return active;
+  }, [times, nowMin]);
 
   const next = useMemo(() => {
     for (const k of CARD_KEYS) {
@@ -138,16 +162,23 @@ export default function PrayerDashboard() {
     }
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), offsets);
+    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), effectiveOffsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, offsets, now, city, dataVersion]);
+  }, [times, nowMin, effectiveOffsets, now, city, dataVersion]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
+  const isFriday = now.getDay() === 5;
+
+  const updateGlobalOffset = (n: number) => {
+    setGlobalOffset(n);
+    try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
+  };
 
   if (!mounted) {
     // Avoid SSR/locale hydration mismatch — render blank shell
     return <div className="h-screen w-screen bg-background" />;
   }
+
 
   return (
     <div className="relative w-full min-h-screen bg-background bg-radial-glow text-foreground">
@@ -185,19 +216,47 @@ export default function PrayerDashboard() {
             </div>
           </div>
 
-          {/* Countdown */}
+          {/* Countdown OR active prayer alert */}
           <div className="order-3 flex flex-col items-center gap-1 sm:items-end">
-            <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
-              Koha e mbetur
-            </div>
-            <div className="text-sm sm:text-[2.2vh] text-foreground/80">
-              {CARD_LABELS[next.key]} pas
-            </div>
-            <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
-              {formatCountdown(remainingSecs)}
-            </div>
+            {activePrayer ? (
+              <>
+                <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-primary/80">
+                  {CARD_LABELS[activePrayer.key]}
+                </div>
+                <div className="rounded-2xl px-4 py-2 sm:px-5 sm:py-3 bg-primary/15 ring-1 ring-primary/40 animate-pulse-glow">
+                  <div className="text-base sm:text-[2.6vh] font-bold text-primary leading-tight text-center sm:text-right">
+                    Tani është koha e namazit!
+                  </div>
+                  <div className="text-xs sm:text-[1.6vh] text-primary/80 text-center sm:text-right">
+                    Faluni 🤲
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
+                  Koha e mbetur
+                </div>
+                <div className="text-sm sm:text-[2.2vh] text-foreground/80">
+                  {CARD_LABELS[next.key]} pas
+                </div>
+                <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
+                  {formatCountdown(remainingSecs)}
+                </div>
+              </>
+            )}
           </div>
         </header>
+
+        {isFriday && (
+          <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 ring-1 ring-primary/30 px-4 py-2 text-center text-xs sm:text-sm text-primary/90 backdrop-blur">
+            <span className="size-2 rounded-full bg-primary animate-pulse" />
+            <span className="font-medium">
+              Sot e Xhuma: Ligjërata (Hytbeja) në 12:45 · Namazi në 13:00
+            </span>
+          </div>
+        )}
+
 
         {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
         <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
@@ -263,7 +322,7 @@ export default function PrayerDashboard() {
       </div>
 
       {/* SCROLLABLE EXTRA SECTION */}
-      <ExtraSection now={now} city={city} dataVersion={dataVersion} offsets={offsets} />
+      <ExtraSection now={now} city={city} dataVersion={dataVersion} offsets={effectiveOffsets} globalOffset={globalOffset} onGlobalOffsetChange={updateGlobalOffset} />
 
       {showSettings && (
         <SettingsModal
@@ -305,8 +364,8 @@ const MONTH_NAMES_SQ = [
 ];
 
 function ExtraSection({
-  now, city, dataVersion, offsets,
-}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets }) {
+  now, city, dataVersion, offsets, globalOffset, onGlobalOffsetChange,
+}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets; globalOffset: number; onGlobalOffsetChange: (n: number) => void }) {
   const month = now.getMonth();
   const year = now.getFullYear();
   const today = now.getDate();
@@ -421,9 +480,37 @@ function ExtraSection({
         </div>
       </div>
 
+      {/* Global offset widget */}
+      <div className="flex flex-col items-center gap-2 pt-2">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70">
+          Ndryshimi i takvimit
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {[-2, -1, 0, 1, 2, 3].map((n) => {
+            const active = globalOffset === n;
+            const label = n === 0 ? "Prishtinë (0)" : `${n > 0 ? "+" : ""}${n} min`;
+            return (
+              <button
+                key={n}
+                onClick={() => onGlobalOffsetChange(n)}
+                className={[
+                  "rounded-full px-3 py-1 text-xs font-medium transition border",
+                  active
+                    ? "bg-primary/20 text-primary border-primary/40"
+                    : "bg-surface/40 text-muted-foreground border-border hover:text-foreground hover:bg-surface",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <p className="text-center text-xs text-muted-foreground pb-2">
         Të dhënat zyrtare nga Bashkësia Islame e Kosovës (BIK).
       </p>
+
     </section>
   );
 }

@@ -121,7 +121,6 @@ export default function QiblaCompass() {
     window.addEventListener("deviceorientation", onOrient, true);
   };
   const detach = () => {
-  const detach = () => {
     window.removeEventListener("deviceorientationabsolute", onOrient as EventListener, true);
     window.removeEventListener("deviceorientation", onOrient, true);
     if (rafRef.current !== null) {

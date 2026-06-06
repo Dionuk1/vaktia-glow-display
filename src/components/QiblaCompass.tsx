@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const QIBLA = 137; // Qibla angle for Kosovo
 
@@ -20,6 +20,9 @@ export default function QiblaCompass() {
   const [supported, setSupported] = useState<boolean>(false);
   const [needsPermission, setNeedsPermission] = useState<boolean>(false);
   const [platform, setPlatform] = useState<Platform>("ios");
+  const smoothedRef = useRef<number | null>(null);
+  const targetRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPlatform(detectPlatform());
@@ -32,8 +35,14 @@ export default function QiblaCompass() {
     if (!DOE) return;
     setSupported(true);
 
-    // Reset heading when switching platform
+    // Reset heading and smoothing state when switching platform
     setHeading(null);
+    smoothedRef.current = null;
+    targetRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
 
     if (platform === "ios" && typeof DOE.requestPermission === "function") {
       setNeedsPermission(true);
@@ -50,29 +59,59 @@ export default function QiblaCompass() {
     let h: number | null = null;
 
     if (platform === "ios") {
-      // iOS path: prefer webkitCompassHeading (true heading)
       const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
       if (typeof wk === "number") {
         h = wk;
       } else if (typeof e.alpha === "number") {
         h = 360 - e.alpha;
       }
-    } else {
-      // Android path: use alpha, prefer absolute orientation events
-      if (typeof e.alpha === "number") {
-        h = 360 - e.alpha;
-        // If browser reports non-absolute alpha, it's relative to initial
-        // orientation — there's no reliable correction without magnetometer
-        // calibration, but we still display it as best-effort.
-        if (e.absolute === false) {
-          // best-effort: keep as is
-        }
+      if (h !== null && !Number.isNaN(h)) {
+        setHeading(((h % 360) + 360) % 360);
       }
+      return;
     }
 
-    if (h !== null && !Number.isNaN(h)) {
-      setHeading(((h % 360) + 360) % 360);
+    // Android: feed target into smoothing loop
+    if (typeof e.alpha === "number") {
+      h = 360 - e.alpha;
+      const normalized = ((h % 360) + 360) % 360;
+      targetRef.current = normalized;
+      if (smoothedRef.current === null) {
+        smoothedRef.current = normalized;
+        setHeading(normalized);
+      }
+      startSmoothing();
     }
+  };
+
+  const startSmoothing = () => {
+    if (rafRef.current !== null) return;
+    const k = 0.15; // low-pass filter coefficient
+    const tick = () => {
+      const target = targetRef.current;
+      const current = smoothedRef.current;
+      if (target === null || current === null) {
+        rafRef.current = null;
+        return;
+      }
+      // Shortest angular distance (handle 0/360 wrap)
+      let diff = target - current;
+      if (diff > 180) diff -= 360;
+      else if (diff < -180) diff += 360;
+
+      const next = (current + k * diff + 360) % 360;
+      smoothedRef.current = next;
+
+      if (Math.abs(diff) < 0.1) {
+        smoothedRef.current = target;
+        setHeading(target);
+        rafRef.current = null;
+        return;
+      }
+      setHeading(next);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   const attach = () => {
@@ -84,6 +123,10 @@ export default function QiblaCompass() {
   const detach = () => {
     window.removeEventListener("deviceorientationabsolute", onOrient as EventListener, true);
     window.removeEventListener("deviceorientation", onOrient, true);
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
   };
 
   const requestPerm = async () => {

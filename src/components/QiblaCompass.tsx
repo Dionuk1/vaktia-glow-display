@@ -20,6 +20,9 @@ export default function QiblaCompass() {
   const [supported, setSupported] = useState<boolean>(false);
   const [needsPermission, setNeedsPermission] = useState<boolean>(false);
   const [platform, setPlatform] = useState<Platform>("ios");
+  const smoothedRef = useRef<number | null>(null);
+  const targetRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPlatform(detectPlatform());

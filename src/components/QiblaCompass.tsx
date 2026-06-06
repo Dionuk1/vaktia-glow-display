@@ -6,10 +6,24 @@ type DeviceOrientationEventiOS = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<"granted" | "denied">;
 };
 
+type Platform = "ios" | "android";
+
+function detectPlatform(): Platform {
+  if (typeof navigator === "undefined") return "ios";
+  const ua = navigator.userAgent || "";
+  if (/android/i.test(ua)) return "android";
+  return "ios";
+}
+
 export default function QiblaCompass() {
   const [heading, setHeading] = useState<number | null>(null);
   const [supported, setSupported] = useState<boolean>(false);
   const [needsPermission, setNeedsPermission] = useState<boolean>(false);
+  const [platform, setPlatform] = useState<Platform>("ios");
+
+  useEffect(() => {
+    setPlatform(detectPlatform());
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -17,32 +31,54 @@ export default function QiblaCompass() {
       .DeviceOrientationEvent;
     if (!DOE) return;
     setSupported(true);
-    if (typeof DOE.requestPermission === "function") {
+
+    // Reset heading when switching platform
+    setHeading(null);
+
+    if (platform === "ios" && typeof DOE.requestPermission === "function") {
       setNeedsPermission(true);
-    } else {
-      attach();
+      return () => detach();
     }
+
+    setNeedsPermission(false);
+    attach();
     return () => detach();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [platform]);
 
   const onOrient = (e: DeviceOrientationEvent) => {
-    // webkitCompassHeading on iOS gives true heading
-    const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
     let h: number | null = null;
-    if (typeof wk === "number") {
-      h = wk;
-    } else if (typeof e.alpha === "number") {
-      // alpha = rotation around z; convert to compass heading
-      h = 360 - e.alpha;
+
+    if (platform === "ios") {
+      // iOS path: prefer webkitCompassHeading (true heading)
+      const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
+      if (typeof wk === "number") {
+        h = wk;
+      } else if (typeof e.alpha === "number") {
+        h = 360 - e.alpha;
+      }
+    } else {
+      // Android path: use alpha, prefer absolute orientation events
+      if (typeof e.alpha === "number") {
+        h = 360 - e.alpha;
+        // If browser reports non-absolute alpha, it's relative to initial
+        // orientation — there's no reliable correction without magnetometer
+        // calibration, but we still display it as best-effort.
+        if (e.absolute === false) {
+          // best-effort: keep as is
+        }
+      }
     }
+
     if (h !== null && !Number.isNaN(h)) {
       setHeading(((h % 360) + 360) % 360);
     }
   };
 
   const attach = () => {
-    window.addEventListener("deviceorientationabsolute", onOrient as EventListener, true);
+    if (platform === "android") {
+      window.addEventListener("deviceorientationabsolute", onOrient as EventListener, true);
+    }
     window.addEventListener("deviceorientation", onOrient, true);
   };
   const detach = () => {
@@ -64,21 +100,40 @@ export default function QiblaCompass() {
     }
   };
 
-  // Direction the user needs to turn from current heading toward Qibla
   const relative = useMemo(() => {
-    if (heading === null) return QIBLA; // static: show Qibla at QIBLA° on wheel
+    if (heading === null) return QIBLA;
     return (QIBLA - heading + 360) % 360;
   }, [heading]);
 
   const aligned =
     heading !== null && Math.min(Math.abs(QIBLA - heading), 360 - Math.abs(QIBLA - heading)) <= 2;
 
-  // Wheel rotates so that "N" stays at top relative to world.
-  // When heading is known, rotate wheel by -heading so N points to true north.
   const wheelRotation = heading === null ? 0 : -heading;
 
   return (
     <div className="flex flex-col items-center">
+      {/* Platform toggle */}
+      <div className="mb-4 inline-flex rounded-full border border-border bg-surface-elevated p-1">
+        {(["ios", "android"] as Platform[]).map((p) => {
+          const active = platform === p;
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPlatform(p)}
+              className={[
+                "px-4 py-1.5 text-xs font-semibold rounded-full transition-all",
+                active
+                  ? "bg-primary/15 text-primary border border-primary shadow-[0_0_12px_var(--color-primary)]"
+                  : "text-muted-foreground hover:text-foreground",
+              ].join(" ")}
+            >
+              {p === "ios" ? "iOS" : "Android"}
+            </button>
+          );
+        })}
+      </div>
+
       <div
         className={[
           "relative aspect-square w-full max-w-[280px] rounded-full",
@@ -92,12 +147,10 @@ export default function QiblaCompass() {
             : "inset 0 2px 20px oklch(0 0 0 / 0.4), 0 10px 30px -10px oklch(0 0 0 / 0.5)",
         }}
       >
-        {/* Rotating wheel */}
         <div
           className="absolute inset-0 transition-transform duration-200 ease-out"
           style={{ transform: `rotate(${wheelRotation}deg)` }}
         >
-          {/* Tick marks */}
           {Array.from({ length: 72 }).map((_, i) => {
             const angle = i * 5;
             const major = angle % 30 === 0;
@@ -120,7 +173,6 @@ export default function QiblaCompass() {
             );
           })}
 
-          {/* Cardinal labels */}
           {[
             { l: "N", a: 0, color: "text-destructive" },
             { l: "E", a: 90, color: "text-muted-foreground" },
@@ -138,7 +190,6 @@ export default function QiblaCompass() {
             </div>
           ))}
 
-          {/* Qibla indicator at 137° */}
           <div
             className="absolute left-1/2 top-1/2 origin-bottom"
             style={{
@@ -164,14 +215,12 @@ export default function QiblaCompass() {
           </div>
         </div>
 
-        {/* Fixed pointer at top (device-facing direction) */}
         {heading !== null && (
           <div className="pointer-events-none absolute left-1/2 -top-2 -translate-x-1/2">
             <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[14px] border-l-transparent border-r-transparent border-b-foreground/80" />
           </div>
         )}
 
-        {/* Center Kaaba */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative">
             <div className="size-14 rounded-md bg-foreground/90 border-2 border-gold flex items-center justify-center shadow-lg">
@@ -224,7 +273,9 @@ export default function QiblaCompass() {
       <p className="mt-3 text-xs text-muted-foreground text-center max-w-xs">
         {heading === null
           ? "Pajisja juaj nuk e mbështet busullën — shenja e gjelbër tregon 137° si referencë fikse."
-          : "Mbani telefonin drejt dhe rrotullohuni derisa shigjeta lart të përputhet me shenjën e gjelbër."}
+          : platform === "android"
+            ? "Android: mbani telefonin horizontalisht dhe kalibrojeni duke e tundur në formë '8'. Pastaj rrotullohuni derisa shigjeta të përputhet me shenjën e gjelbër."
+            : "Mbani telefonin drejt dhe rrotullohuni derisa shigjeta lart të përputhet me shenjën e gjelbër."}
         {" "}Drejtimi nga Kosova drejt Qabesë: <span className="text-primary font-semibold">137° (jug-juglindje)</span>.
       </p>
     </div>

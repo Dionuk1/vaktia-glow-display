@@ -21,8 +21,6 @@ export default function QiblaCompass() {
   const [needsPermission, setNeedsPermission] = useState<boolean>(false);
   const [platform, setPlatform] = useState<Platform>("ios");
   const smoothedRef = useRef<number | null>(null);
-  const targetRef = useRef<number | null>(null);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPlatform(detectPlatform());
@@ -38,11 +36,6 @@ export default function QiblaCompass() {
     // Reset heading and smoothing state when switching platform
     setHeading(null);
     smoothedRef.current = null;
-    targetRef.current = null;
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
 
     if (platform === "ios" && typeof DOE.requestPermission === "function") {
       setNeedsPermission(true);
@@ -55,78 +48,54 @@ export default function QiblaCompass() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platform]);
 
-  const onOrient = (e: DeviceOrientationEvent) => {
+  const normalizeHeading = (value: number) => ((value % 360) + 360) % 360;
+
+  const handleIOSCompass = (e: DeviceOrientationEvent) => {
     let h: number | null = null;
 
-    if (platform === "ios") {
-      const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
-      if (typeof wk === "number") {
-        h = wk;
-      } else if (typeof e.alpha === "number") {
-        h = 360 - e.alpha;
-      }
-      if (h !== null && !Number.isNaN(h)) {
-        setHeading(((h % 360) + 360) % 360);
-      }
-      return;
+    const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
+    if (typeof wk === "number") {
+      h = wk;
+    } else if (typeof e.alpha === "number") {
+      h = 360 - e.alpha;
     }
 
-    // Android: feed target into smoothing loop
-    if (typeof e.alpha === "number") {
-      h = 360 - e.alpha;
-      const normalized = ((h % 360) + 360) % 360;
-      targetRef.current = normalized;
-      if (smoothedRef.current === null) {
-        smoothedRef.current = normalized;
-        setHeading(normalized);
-      }
-      startSmoothing();
+    if (h !== null && !Number.isNaN(h)) {
+      setHeading(normalizeHeading(h));
     }
   };
 
-  const startSmoothing = () => {
-    if (rafRef.current !== null) return;
-    const k = 0.15; // low-pass filter coefficient
-    const tick = () => {
-      const target = targetRef.current;
-      const current = smoothedRef.current;
-      if (target === null || current === null) {
-        rafRef.current = null;
-        return;
-      }
-      // Shortest angular distance (handle 0/360 wrap)
-      let diff = target - current;
-      if (diff > 180) diff -= 360;
-      else if (diff < -180) diff += 360;
+  const handleAndroidCompass = (event: DeviceOrientationEvent) => {
+    if (typeof event.alpha !== "number" || Number.isNaN(event.alpha)) return;
 
-      const next = (current + k * diff + 360) % 360;
-      smoothedRef.current = next;
+    const rawHeading = normalizeHeading(event.alpha);
+    const current = smoothedRef.current;
 
-      if (Math.abs(diff) < 0.1) {
-        smoothedRef.current = target;
-        setHeading(target);
-        rafRef.current = null;
-        return;
-      }
-      setHeading(next);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
+    if (current === null) {
+      smoothedRef.current = rawHeading;
+      setHeading(rawHeading);
+      return;
+    }
+
+    let diff = rawHeading - current;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    const next = normalizeHeading(current + diff * 0.1);
+    smoothedRef.current = next;
+    setHeading(next);
   };
 
   const attach = () => {
     if (platform === "android") {
-      window.addEventListener("deviceorientationabsolute", onOrient as EventListener, true);
+      window.addEventListener("deviceorientationabsolute", handleAndroidCompass as EventListener, true);
+      return;
     }
-    window.addEventListener("deviceorientation", onOrient, true);
+    window.addEventListener("deviceorientation", handleIOSCompass, true);
   };
   const detach = () => {
-    window.removeEventListener("deviceorientationabsolute", onOrient as EventListener, true);
-    window.removeEventListener("deviceorientation", onOrient, true);
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
+    window.removeEventListener("deviceorientationabsolute", handleAndroidCompass as EventListener, true);
+    window.removeEventListener("deviceorientation", handleIOSCompass, true);
   };
 
   const requestPerm = async () => {

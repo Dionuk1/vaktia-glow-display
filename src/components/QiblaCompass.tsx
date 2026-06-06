@@ -35,8 +35,14 @@ export default function QiblaCompass() {
     if (!DOE) return;
     setSupported(true);
 
-    // Reset heading when switching platform
+    // Reset heading and smoothing state when switching platform
     setHeading(null);
+    smoothedRef.current = null;
+    targetRef.current = null;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
 
     if (platform === "ios" && typeof DOE.requestPermission === "function") {
       setNeedsPermission(true);

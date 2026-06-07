@@ -18,27 +18,6 @@ const DHIKRS: Dhikr[] = [
     meaning: "Kërkoj falje nga Allahu.",
   },
   {
-    key: "elhamdulillah",
-    title: "Elhamdulillah",
-    arabic: "ٱلْحَمْدُ لِلَّٰهِ",
-    target: 33,
-    meaning: "Falënderimi i takon Allahut.",
-  },
-  {
-    key: "subhanallah",
-    title: "Subhanallah",
-    arabic: "سُبْحَانَ ٱللَّٰهِ",
-    target: 33,
-    meaning: "I lartësuar qoftë Allahu.",
-  },
-  {
-    key: "allahuekber",
-    title: "Allahu Ekber",
-    arabic: "ٱللَّٰهُ أَكْبَرُ",
-    target: 34,
-    meaning: "Allahu është më i madhi.",
-  },
-  {
     key: "lailaheilallah",
     title: "La ilahe il-lAllah",
     arabic: "لَا إِلَٰهَ إِلَّا ٱللَّٰهُ",
@@ -51,6 +30,27 @@ const DHIKRS: Dhikr[] = [
     arabic: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِٱللَّٰهِ",
     target: 33,
     meaning: "Nuk ka ndryshim e as fuqi pa ndihmën e Allahut.",
+  },
+  {
+    key: "subhanallah",
+    title: "Subhanallah",
+    arabic: "سُبْحَانَ ٱللَّٰهِ",
+    target: 33,
+    meaning: "I lartësuar qoftë Allahu.",
+  },
+  {
+    key: "elhamdulillah",
+    title: "Elhamdulillah",
+    arabic: "ٱلْحَمْدُ لِلَّٰهِ",
+    target: 33,
+    meaning: "Falënderimi i takon Allahut.",
+  },
+  {
+    key: "allahuekber",
+    title: "Allahu Ekber",
+    arabic: "ٱللَّٰهُ أَكْبَرُ",
+    target: 34,
+    meaning: "Allahu është më i madhi.",
   },
 ];
 
@@ -172,19 +172,19 @@ export default function VoluntaryDhikr() {
                   key={d.key}
                   onClick={() => pick(d.key)}
                   className={[
-                    "snap-start shrink-0 w-[220px] text-left rounded-2xl p-4 bg-surface/60 backdrop-blur transition-all duration-300 active:scale-[0.98]",
+                    "snap-start shrink-0 w-[260px] text-left rounded-2xl p-5 bg-surface/60 backdrop-blur transition-all duration-300 active:scale-[0.98]",
                     active
                       ? "ring-2 ring-primary shadow-[0_0_30px_-5px_var(--color-primary)]"
                       : "ring-1 ring-border hover:ring-primary/40",
                   ].join(" ")}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="text-sm font-semibold text-foreground leading-tight">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="text-sm font-semibold text-foreground leading-snug break-words min-w-0">
                       {d.title}
                     </div>
                     <span
                       className={[
-                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums",
+                        "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold tabular-nums",
                         active
                           ? "bg-primary text-primary-foreground"
                           : "bg-border/60 text-foreground/80",
@@ -194,7 +194,7 @@ export default function VoluntaryDhikr() {
                     </span>
                   </div>
                   <p
-                    className="text-lg font-semibold mb-2 leading-snug"
+                    className="text-lg font-semibold mb-3 leading-snug break-words"
                     dir="rtl"
                     lang="ar"
                   >

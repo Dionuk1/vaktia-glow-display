@@ -402,6 +402,11 @@ function ExtraSection({
         <TasbihCounter />
       </div>
 
+      {/* Voluntary dhikr */}
+      <div>
+        <VoluntaryDhikr />
+      </div>
+
 
       {/* Monthly table */}
       <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">

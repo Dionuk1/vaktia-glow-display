@@ -685,3 +685,83 @@ function SettingsModal({
     </div>
   );
 }
+
+function LocationSelector({
+  region,
+  city,
+  alCity,
+  onChange,
+}: {
+  region: RegionKey;
+  city: CityKey;
+  alCity: AlbaniaCityKey;
+  onChange: (region: RegionKey, city: AnyCityKey) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
+  const activeLabel = getCityLabel(region, activeCity);
+  const sourceLabel = region === "Shqiperi" ? "KMSH" : "BIK";
+  const regionShort = region === "Shqiperi" ? "Shqipëri" : "Kosovë";
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.25em] text-foreground/90 hover:border-primary/40 hover:text-primary transition"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <MapPin className="size-3 sm:size-[1.6vh]" />
+        <span>{activeLabel}, {regionShort} · {sourceLabel}</span>
+        <ChevronDown className={`size-3 transition ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div
+            className="absolute left-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-surface-elevated p-2 card-glow"
+            role="listbox"
+          >
+            {(["Kosove", "Shqiperi"] as RegionKey[]).map((r) => (
+              <div key={r} className="mb-1 last:mb-0">
+                <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                  {REGION_LABELS[r]}
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  {(r === "Kosove"
+                    ? (Object.keys(CITY_LABELS) as CityKey[])
+                    : (ALBANIA_CITIES as readonly AlbaniaCityKey[])
+                  ).map((c) => {
+                    const isActive = region === r && activeCity === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => {
+                          onChange(r, c as AnyCityKey);
+                          setOpen(false);
+                        }}
+                        className={[
+                          "rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition border",
+                          isActive
+                            ? "bg-primary/20 text-primary border-primary/40"
+                            : "bg-transparent text-foreground/80 border-transparent hover:bg-surface hover:text-foreground",
+                        ].join(" ")}
+                      >
+                        {getCityLabel(r, c as AnyCityKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

@@ -355,7 +355,7 @@ export default function PrayerDashboard() {
       </div>
 
       {/* SCROLLABLE EXTRA SECTION */}
-      <ExtraSection now={now} city={city} dataVersion={dataVersion} offsets={effectiveOffsets} globalOffset={globalOffset} onGlobalOffsetChange={updateGlobalOffset} />
+      <ExtraSection now={now} region={region} city={activeCity} dataVersion={dataVersion} offsets={effectiveOffsets} globalOffset={globalOffset} onGlobalOffsetChange={updateGlobalOffset} />
 
       {showSettings && (
         <SettingsModal

@@ -156,10 +156,10 @@ export default function PrayerDashboard() {
     return out;
   }, [offsets, globalOffset]);
 
-  const times = useMemo(
-    () => applyOffsets(getTimesForDate(now, city), effectiveOffsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), effectiveOffsets, city, dataVersion]
-  );
+  const times = useMemo(() => {
+    const base = getTimesForLocation(now, region, activeCity);
+    return region === "Shqiperi" ? base : applyOffsets(base, effectiveOffsets);
+  }, [now.getDate(), now.getMonth(), now.getFullYear(), effectiveOffsets, region, activeCity, dataVersion]);
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
 
@@ -182,9 +182,10 @@ export default function PrayerDashboard() {
     }
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), effectiveOffsets);
+    const baseT = getTimesForLocation(tomorrow, region, activeCity);
+    const tTimes = region === "Shqiperi" ? baseT : applyOffsets(baseT, effectiveOffsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, effectiveOffsets, now, city, dataVersion]);
+  }, [times, nowMin, effectiveOffsets, now, region, activeCity, dataVersion]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
   const isFriday = now.getDay() === 5;

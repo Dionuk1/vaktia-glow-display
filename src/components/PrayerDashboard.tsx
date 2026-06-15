@@ -421,7 +421,7 @@ function ExtraSection({
             <Compass className="size-4" /> Busulla-Kibla
           </div>
           <div className="text-xs text-muted-foreground">
-            {CITY_LABELS[city]} · CET
+            {getCityLabel(region, city)} · CET
           </div>
         </div>
         <QiblaCompass />

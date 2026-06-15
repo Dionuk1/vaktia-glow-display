@@ -4,16 +4,24 @@ import TasbihCounter from "./TasbihCounter";
 import VoluntaryDhikr from "./VoluntaryDhikr";
 import QiblaCompass from "./QiblaCompass";
 import {
-  getTimesForDate,
-  getMonthTimes,
+  getMonthTimesForLocation,
+  getTimesForLocation,
   CARD_KEYS,
   CARD_LABELS,
   CITY_OFFSETS,
   CITY_LABELS,
+  ALBANIA_CITIES,
+  ALBANIA_CITY_LABELS,
+  REGION_LABELS,
+  getCityLabel,
+  getRegionLabel,
   fetchLatestFromBIK,
   fetchLiveTodayFromBislame,
   getRemoteMeta,
   type CityKey,
+  type AlbaniaCityKey,
+  type AnyCityKey,
+  type RegionKey,
   type DayTimes,
   type RemoteMeta,
 } from "@/lib/prayer-data";
@@ -24,7 +32,9 @@ const ZERO_OFFSETS: Offsets = {
   imsaku: 0, sabahu: 0, lindja: 0, dreka: 0, ikindia: 0, akshami: 0, jacia: 0,
 };
 
+const REGION_KEY = "vaktia-region-v1";
 const CITY_KEY = "vaktia-city-v1";
+const AL_CITY_KEY = "vaktia-al-city-v1";
 
 const STORAGE_KEY = "vaktia-offsets-v1";
 const GLOBAL_OFFSET_KEY = "vaktia-global-offset-v1";
@@ -98,18 +108,26 @@ export default function PrayerDashboard() {
   const [now, setNow] = useState(() => new Date());
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
   const [globalOffset, setGlobalOffset] = useState<number>(0);
+  const [region, setRegion] = useState<RegionKey>("Kosove");
   const [city, setCity] = useState<CityKey>("Prishtina");
+  const [alCity, setAlCity] = useState<AlbaniaCityKey>("Shkoder");
   const [showSettings, setShowSettings] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
   const [remoteMeta, setRemoteMeta] = useState<RemoteMeta | null>(null);
+
+  const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
 
   useEffect(() => {
     setMounted(true);
     setOffsets(loadOffsets());
     setRemoteMeta(getRemoteMeta());
     try {
+      const r = localStorage.getItem(REGION_KEY) as RegionKey | null;
+      if (r === "Kosove" || r === "Shqiperi") setRegion(r);
       const c = localStorage.getItem(CITY_KEY) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
+      const ac = localStorage.getItem(AL_CITY_KEY) as AlbaniaCityKey | null;
+      if (ac && (ALBANIA_CITIES as readonly string[]).includes(ac)) setAlCity(ac);
       const g = localStorage.getItem(GLOBAL_OFFSET_KEY);
       if (g !== null) setGlobalOffset(Number(g) || 0);
     } catch {}
@@ -138,10 +156,10 @@ export default function PrayerDashboard() {
     return out;
   }, [offsets, globalOffset]);
 
-  const times = useMemo(
-    () => applyOffsets(getTimesForDate(now, city), effectiveOffsets),
-    [now.getDate(), now.getMonth(), now.getFullYear(), effectiveOffsets, city, dataVersion]
-  );
+  const times = useMemo(() => {
+    const base = getTimesForLocation(now, region, activeCity);
+    return region === "Shqiperi" ? base : applyOffsets(base, effectiveOffsets);
+  }, [now.getDate(), now.getMonth(), now.getFullYear(), effectiveOffsets, region, activeCity, dataVersion]);
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
 
@@ -164,9 +182,10 @@ export default function PrayerDashboard() {
     }
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tTimes = applyOffsets(getTimesForDate(tomorrow, city), effectiveOffsets);
+    const baseT = getTimesForLocation(tomorrow, region, activeCity);
+    const tTimes = region === "Shqiperi" ? baseT : applyOffsets(baseT, effectiveOffsets);
     return { key: CARD_KEYS[0], minutes: toMin(tTimes[CARD_KEYS[0]]) + 24 * 60 };
-  }, [times, nowMin, effectiveOffsets, now, city, dataVersion]);
+  }, [times, nowMin, effectiveOffsets, now, region, activeCity, dataVersion]);
 
   const remainingSecs = (next.minutes - nowMin) * 60;
   const isFriday = now.getDay() === 5;
@@ -205,11 +224,23 @@ export default function PrayerDashboard() {
           </div>
 
           {/* Location + date */}
-          <div className="order-2 flex flex-col items-center gap-1 text-center sm:order-1 sm:items-start sm:text-left">
-            <div className="flex items-center gap-2 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
-              <MapPin className="size-3 sm:size-[1.8vh]" />
-              {CITY_LABELS[city]}, Kosovë · BIK
-            </div>
+          <div className="order-2 flex flex-col items-center gap-1.5 text-center sm:order-1 sm:items-start sm:text-left">
+            <LocationSelector
+              region={region}
+              city={city}
+              alCity={alCity}
+              onChange={(r, c) => {
+                setRegion(r);
+                try { localStorage.setItem(REGION_KEY, r); } catch {}
+                if (r === "Kosove") {
+                  setCity(c as CityKey);
+                  try { localStorage.setItem(CITY_KEY, c as string); } catch {}
+                } else {
+                  setAlCity(c as AlbaniaCityKey);
+                  try { localStorage.setItem(AL_CITY_KEY, c as string); } catch {}
+                }
+              }}
+            />
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}
             </div>
@@ -324,7 +355,7 @@ export default function PrayerDashboard() {
       </div>
 
       {/* SCROLLABLE EXTRA SECTION */}
-      <ExtraSection now={now} city={city} dataVersion={dataVersion} offsets={effectiveOffsets} globalOffset={globalOffset} onGlobalOffsetChange={updateGlobalOffset} />
+      <ExtraSection now={now} region={region} city={activeCity} dataVersion={dataVersion} offsets={effectiveOffsets} globalOffset={globalOffset} onGlobalOffsetChange={updateGlobalOffset} />
 
       {showSettings && (
         <SettingsModal
@@ -366,18 +397,19 @@ const MONTH_NAMES_SQ = [
 ];
 
 function ExtraSection({
-  now, city, dataVersion, offsets, globalOffset, onGlobalOffsetChange,
-}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets; globalOffset: number; onGlobalOffsetChange: (n: number) => void }) {
+  now, region, city, dataVersion, offsets, globalOffset, onGlobalOffsetChange,
+}: { now: Date; region: RegionKey; city: AnyCityKey; dataVersion: number; offsets: Offsets; globalOffset: number; onGlobalOffsetChange: (n: number) => void }) {
   const month = now.getMonth();
   const year = now.getFullYear();
   const today = now.getDate();
+  const isAlbania = region === "Shqiperi";
 
   const rows = useMemo(
-    () => getMonthTimes(year, month, city).map((r) => ({
+    () => getMonthTimesForLocation(year, month, region, city).map((r) => ({
       date: r.date,
-      times: applyOffsets(r.times, offsets),
+      times: isAlbania ? r.times : applyOffsets(r.times, offsets),
     })),
-    [year, month, city, dataVersion, offsets]
+    [year, month, region, city, dataVersion, offsets, isAlbania]
   );
 
   return (
@@ -389,7 +421,7 @@ function ExtraSection({
             <Compass className="size-4" /> Busulla-Kibla
           </div>
           <div className="text-xs text-muted-foreground">
-            {CITY_LABELS[city]} · CET
+            {getCityLabel(region, city)} · CET
           </div>
         </div>
         <QiblaCompass />
@@ -417,7 +449,7 @@ function ExtraSection({
               Orari mujor
             </div>
             <div className="text-lg sm:text-xl font-semibold mt-1">
-              {MONTH_NAMES_SQ[month]} {year} · {CITY_LABELS[city]}
+              {MONTH_NAMES_SQ[month]} {year} · {getCityLabel(region, city)}
             </div>
           </div>
         </div>
@@ -463,36 +495,41 @@ function ExtraSection({
         </div>
       </div>
 
-      {/* Global offset widget */}
-      <div className="flex flex-col items-center gap-2 pt-2">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70">
-          Ndryshimi i takvimit
+      {/* Global offset widget — Kosovë only (Shqipëri ka tabela të plota për qytet) */}
+      {!isAlbania && (
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70">
+            Ndryshimi i takvimit
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {[-2, -1, 0, 1, 2, 3].map((n) => {
+              const active = globalOffset === n;
+              const label = n === 0 ? "Prishtinë (0)" : `${n > 0 ? "+" : ""}${n} min`;
+              return (
+                <button
+                  key={n}
+                  onClick={() => onGlobalOffsetChange(n)}
+                  className={[
+                    "rounded-full px-3 py-1 text-xs font-medium transition border",
+                    active
+                      ? "bg-primary/20 text-primary border-primary/40"
+                      : "bg-surface/40 text-muted-foreground border-border hover:text-foreground hover:bg-surface",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {[-2, -1, 0, 1, 2, 3].map((n) => {
-            const active = globalOffset === n;
-            const label = n === 0 ? "Prishtinë (0)" : `${n > 0 ? "+" : ""}${n} min`;
-            return (
-              <button
-                key={n}
-                onClick={() => onGlobalOffsetChange(n)}
-                className={[
-                  "rounded-full px-3 py-1 text-xs font-medium transition border",
-                  active
-                    ? "bg-primary/20 text-primary border-primary/40"
-                    : "bg-surface/40 text-muted-foreground border-border hover:text-foreground hover:bg-surface",
-                ].join(" ")}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       <p className="text-center text-xs text-muted-foreground pb-2">
-        Të dhënat zyrtare nga Bashkësia Islame e Kosovës (BIK).
+        {isAlbania
+          ? "Të dhënat zyrtare nga Komuniteti Mysliman i Shqipërisë (KMSH)."
+          : "Të dhënat zyrtare nga Bashkësia Islame e Kosovës (BIK)."}
       </p>
+
 
     </section>
   );
@@ -645,6 +682,86 @@ function SettingsModal({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function LocationSelector({
+  region,
+  city,
+  alCity,
+  onChange,
+}: {
+  region: RegionKey;
+  city: CityKey;
+  alCity: AlbaniaCityKey;
+  onChange: (region: RegionKey, city: AnyCityKey) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
+  const activeLabel = getCityLabel(region, activeCity);
+  const sourceLabel = region === "Shqiperi" ? "KMSH" : "BIK";
+  const regionShort = region === "Shqiperi" ? "Shqipëri" : "Kosovë";
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.25em] text-foreground/90 hover:border-primary/40 hover:text-primary transition"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <MapPin className="size-3 sm:size-[1.6vh]" />
+        <span>{activeLabel}, {regionShort} · {sourceLabel}</span>
+        <ChevronDown className={`size-3 transition ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div
+            className="absolute left-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-surface-elevated p-2 card-glow"
+            role="listbox"
+          >
+            {(["Kosove", "Shqiperi"] as RegionKey[]).map((r) => (
+              <div key={r} className="mb-1 last:mb-0">
+                <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                  {REGION_LABELS[r]}
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  {(r === "Kosove"
+                    ? (Object.keys(CITY_LABELS) as CityKey[])
+                    : (ALBANIA_CITIES as readonly AlbaniaCityKey[])
+                  ).map((c) => {
+                    const isActive = region === r && activeCity === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => {
+                          onChange(r, c as AnyCityKey);
+                          setOpen(false);
+                        }}
+                        className={[
+                          "rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition border",
+                          isActive
+                            ? "bg-primary/20 text-primary border-primary/40"
+                            : "bg-transparent text-foreground/80 border-transparent hover:bg-surface hover:text-foreground",
+                        ].join(" ")}
+                      >
+                        {getCityLabel(r, c as AnyCityKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

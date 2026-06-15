@@ -154,6 +154,65 @@ export const CARD_LABELS: Record<string, string> = {
   jacia: "Jacia",
 };
 
+// ---------- Region dispatcher (Kosovë + Shqipëri pushime) ----------
+
+import {
+  ALBANIA_CITIES,
+  ALBANIA_CITY_LABELS,
+  getAlbanianTimesForDate,
+  getAlbanianMonthTimes,
+  type AlbaniaCityKey,
+} from "./albania-times";
+
+export type RegionKey = "Kosove" | "Shqiperi";
+
+export const REGION_LABELS: Record<RegionKey, string> = {
+  Kosove: "Kosovë",
+  Shqiperi: "Shqipëri — Pushime",
+};
+
+export const REGION_CITIES: Record<RegionKey, readonly string[]> = {
+  Kosove: Object.keys(CITY_LABELS),
+  Shqiperi: ALBANIA_CITIES,
+};
+
+export type AnyCityKey = CityKey | AlbaniaCityKey;
+
+export function getCityLabel(region: RegionKey, city: AnyCityKey): string {
+  if (region === "Shqiperi") return ALBANIA_CITY_LABELS[city as AlbaniaCityKey] ?? String(city);
+  return CITY_LABELS[city as CityKey] ?? String(city);
+}
+
+export function getRegionLabel(region: RegionKey): string {
+  return region === "Kosove" ? "Kosovë · BIK" : "Shqipëri · KMSH";
+}
+
+export function getTimesForLocation(
+  date: Date,
+  region: RegionKey,
+  city: AnyCityKey,
+): DayTimes {
+  if (region === "Shqiperi") {
+    return getAlbanianTimesForDate(date, city as AlbaniaCityKey);
+  }
+  return getTimesForDate(date, city as CityKey);
+}
+
+export function getMonthTimesForLocation(
+  year: number,
+  month: number,
+  region: RegionKey,
+  city: AnyCityKey,
+) {
+  if (region === "Shqiperi") {
+    return getAlbanianMonthTimes(year, month, city as AlbaniaCityKey);
+  }
+  return getMonthTimes(year, month, city as CityKey);
+}
+
+export { ALBANIA_CITIES, ALBANIA_CITY_LABELS };
+export type { AlbaniaCityKey };
+
 // ---------- Remote sync from BIK GitHub mirror ----------
 
 const REMOTE_URL =

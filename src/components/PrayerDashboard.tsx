@@ -224,11 +224,23 @@ export default function PrayerDashboard() {
           </div>
 
           {/* Location + date */}
-          <div className="order-2 flex flex-col items-center gap-1 text-center sm:order-1 sm:items-start sm:text-left">
-            <div className="flex items-center gap-2 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.3em] text-muted-foreground">
-              <MapPin className="size-3 sm:size-[1.8vh]" />
-              {CITY_LABELS[city]}, Kosovë · BIK
-            </div>
+          <div className="order-2 flex flex-col items-center gap-1.5 text-center sm:order-1 sm:items-start sm:text-left">
+            <LocationSelector
+              region={region}
+              city={city}
+              alCity={alCity}
+              onChange={(r, c) => {
+                setRegion(r);
+                try { localStorage.setItem(REGION_KEY, r); } catch {}
+                if (r === "Kosove") {
+                  setCity(c as CityKey);
+                  try { localStorage.setItem(CITY_KEY, c as string); } catch {}
+                } else {
+                  setAlCity(c as AlbaniaCityKey);
+                  try { localStorage.setItem(AL_CITY_KEY, c as string); } catch {}
+                }
+              }}
+            />
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}
             </div>

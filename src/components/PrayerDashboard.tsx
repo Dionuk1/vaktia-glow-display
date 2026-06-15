@@ -397,18 +397,19 @@ const MONTH_NAMES_SQ = [
 ];
 
 function ExtraSection({
-  now, city, dataVersion, offsets, globalOffset, onGlobalOffsetChange,
-}: { now: Date; city: CityKey; dataVersion: number; offsets: Offsets; globalOffset: number; onGlobalOffsetChange: (n: number) => void }) {
+  now, region, city, dataVersion, offsets, globalOffset, onGlobalOffsetChange,
+}: { now: Date; region: RegionKey; city: AnyCityKey; dataVersion: number; offsets: Offsets; globalOffset: number; onGlobalOffsetChange: (n: number) => void }) {
   const month = now.getMonth();
   const year = now.getFullYear();
   const today = now.getDate();
+  const isAlbania = region === "Shqiperi";
 
   const rows = useMemo(
-    () => getMonthTimes(year, month, city).map((r) => ({
+    () => getMonthTimesForLocation(year, month, region, city).map((r) => ({
       date: r.date,
-      times: applyOffsets(r.times, offsets),
+      times: isAlbania ? r.times : applyOffsets(r.times, offsets),
     })),
-    [year, month, city, dataVersion, offsets]
+    [year, month, region, city, dataVersion, offsets, isAlbania]
   );
 
   return (

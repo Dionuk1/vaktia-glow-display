@@ -4,16 +4,24 @@ import TasbihCounter from "./TasbihCounter";
 import VoluntaryDhikr from "./VoluntaryDhikr";
 import QiblaCompass from "./QiblaCompass";
 import {
-  getTimesForDate,
-  getMonthTimes,
+  getMonthTimesForLocation,
+  getTimesForLocation,
   CARD_KEYS,
   CARD_LABELS,
   CITY_OFFSETS,
   CITY_LABELS,
+  ALBANIA_CITIES,
+  ALBANIA_CITY_LABELS,
+  REGION_LABELS,
+  getCityLabel,
+  getRegionLabel,
   fetchLatestFromBIK,
   fetchLiveTodayFromBislame,
   getRemoteMeta,
   type CityKey,
+  type AlbaniaCityKey,
+  type AnyCityKey,
+  type RegionKey,
   type DayTimes,
   type RemoteMeta,
 } from "@/lib/prayer-data";
@@ -24,7 +32,9 @@ const ZERO_OFFSETS: Offsets = {
   imsaku: 0, sabahu: 0, lindja: 0, dreka: 0, ikindia: 0, akshami: 0, jacia: 0,
 };
 
+const REGION_KEY = "vaktia-region-v1";
 const CITY_KEY = "vaktia-city-v1";
+const AL_CITY_KEY = "vaktia-al-city-v1";
 
 const STORAGE_KEY = "vaktia-offsets-v1";
 const GLOBAL_OFFSET_KEY = "vaktia-global-offset-v1";

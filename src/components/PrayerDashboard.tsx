@@ -108,18 +108,26 @@ export default function PrayerDashboard() {
   const [now, setNow] = useState(() => new Date());
   const [offsets, setOffsets] = useState<Offsets>(ZERO_OFFSETS);
   const [globalOffset, setGlobalOffset] = useState<number>(0);
+  const [region, setRegion] = useState<RegionKey>("Kosove");
   const [city, setCity] = useState<CityKey>("Prishtina");
+  const [alCity, setAlCity] = useState<AlbaniaCityKey>("Shkoder");
   const [showSettings, setShowSettings] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
   const [remoteMeta, setRemoteMeta] = useState<RemoteMeta | null>(null);
+
+  const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
 
   useEffect(() => {
     setMounted(true);
     setOffsets(loadOffsets());
     setRemoteMeta(getRemoteMeta());
     try {
+      const r = localStorage.getItem(REGION_KEY) as RegionKey | null;
+      if (r === "Kosove" || r === "Shqiperi") setRegion(r);
       const c = localStorage.getItem(CITY_KEY) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
+      const ac = localStorage.getItem(AL_CITY_KEY) as AlbaniaCityKey | null;
+      if (ac && (ALBANIA_CITIES as readonly string[]).includes(ac)) setAlCity(ac);
       const g = localStorage.getItem(GLOBAL_OFFSET_KEY);
       if (g !== null) setGlobalOffset(Number(g) || 0);
     } catch {}

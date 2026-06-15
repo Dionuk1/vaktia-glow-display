@@ -449,7 +449,7 @@ function ExtraSection({
               Orari mujor
             </div>
             <div className="text-lg sm:text-xl font-semibold mt-1">
-              {MONTH_NAMES_SQ[month]} {year} · {CITY_LABELS[city]}
+              {MONTH_NAMES_SQ[month]} {year} · {getCityLabel(region, city)}
             </div>
           </div>
         </div>

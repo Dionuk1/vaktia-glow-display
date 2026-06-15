@@ -495,36 +495,41 @@ function ExtraSection({
         </div>
       </div>
 
-      {/* Global offset widget */}
-      <div className="flex flex-col items-center gap-2 pt-2">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70">
-          Ndryshimi i takvimit
+      {/* Global offset widget — Kosovë only (Shqipëri ka tabela të plota për qytet) */}
+      {!isAlbania && (
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70">
+            Ndryshimi i takvimit
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {[-2, -1, 0, 1, 2, 3].map((n) => {
+              const active = globalOffset === n;
+              const label = n === 0 ? "Prishtinë (0)" : `${n > 0 ? "+" : ""}${n} min`;
+              return (
+                <button
+                  key={n}
+                  onClick={() => onGlobalOffsetChange(n)}
+                  className={[
+                    "rounded-full px-3 py-1 text-xs font-medium transition border",
+                    active
+                      ? "bg-primary/20 text-primary border-primary/40"
+                      : "bg-surface/40 text-muted-foreground border-border hover:text-foreground hover:bg-surface",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {[-2, -1, 0, 1, 2, 3].map((n) => {
-            const active = globalOffset === n;
-            const label = n === 0 ? "Prishtinë (0)" : `${n > 0 ? "+" : ""}${n} min`;
-            return (
-              <button
-                key={n}
-                onClick={() => onGlobalOffsetChange(n)}
-                className={[
-                  "rounded-full px-3 py-1 text-xs font-medium transition border",
-                  active
-                    ? "bg-primary/20 text-primary border-primary/40"
-                    : "bg-surface/40 text-muted-foreground border-border hover:text-foreground hover:bg-surface",
-                ].join(" ")}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       <p className="text-center text-xs text-muted-foreground pb-2">
-        Të dhënat zyrtare nga Bashkësia Islame e Kosovës (BIK).
+        {isAlbania
+          ? "Të dhënat zyrtare nga Komuniteti Mysliman i Shqipërisë (KMSH)."
+          : "Të dhënat zyrtare nga Bashkësia Islame e Kosovës (BIK)."}
       </p>
+
 
     </section>
   );

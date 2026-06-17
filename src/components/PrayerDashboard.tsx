@@ -354,16 +354,26 @@ export default function PrayerDashboard() {
       {showSettings && (
         <SettingsModal
           offsets={offsets}
+          region={region}
           city={city}
+          alCity={alCity}
           remoteMeta={remoteMeta}
           onClose={() => setShowSettings(false)}
           onChange={(o) => {
             setOffsets(o);
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); } catch {}
           }}
+          onRegionChange={(r) => {
+            setRegion(r);
+            try { localStorage.setItem(REGION_KEY, r); } catch {}
+          }}
           onCityChange={(c) => {
             setCity(c);
             try { localStorage.setItem(CITY_KEY, c); } catch {}
+          }}
+          onAlCityChange={(c) => {
+            setAlCity(c);
+            try { localStorage.setItem(AL_CITY_KEY, c); } catch {}
           }}
           onUpdated={(meta) => {
             setRemoteMeta(meta);

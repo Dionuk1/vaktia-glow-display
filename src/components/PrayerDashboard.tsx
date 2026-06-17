@@ -225,22 +225,16 @@ export default function PrayerDashboard() {
 
           {/* Location + date */}
           <div className="order-2 flex flex-col items-center gap-1.5 text-center sm:order-1 sm:items-start sm:text-left">
-            <LocationSelector
-              region={region}
-              city={city}
-              alCity={alCity}
-              onChange={(r, c) => {
-                setRegion(r);
-                try { localStorage.setItem(REGION_KEY, r); } catch {}
-                if (r === "Kosove") {
-                  setCity(c as CityKey);
-                  try { localStorage.setItem(CITY_KEY, c as string); } catch {}
-                } else {
-                  setAlCity(c as AlbaniaCityKey);
-                  try { localStorage.setItem(AL_CITY_KEY, c as string); } catch {}
-                }
-              }}
-            />
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.25em] text-foreground/90 hover:border-primary/40 hover:text-primary transition"
+              aria-label="Ndrysho vendndodhjen"
+            >
+              <MapPin className="size-3 sm:size-[1.6vh]" />
+              <span>
+                {getCityLabel(region, activeCity)}, {region === "Shqiperi" ? "Shqipëri 🇦🇱" : "Kosovë 🇽🇰"}
+              </span>
+            </button>
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}
             </div>

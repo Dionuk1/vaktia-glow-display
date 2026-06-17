@@ -12,7 +12,7 @@ import {
   CITY_LABELS,
   ALBANIA_CITIES,
   ALBANIA_CITY_LABELS,
-  REGION_LABELS,
+  
   getCityLabel,
   getRegionLabel,
   fetchLatestFromBIK,

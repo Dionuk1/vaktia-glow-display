@@ -541,19 +541,27 @@ function ExtraSection({
 
 function SettingsModal({
   offsets,
+  region,
   city,
+  alCity,
   remoteMeta,
   onClose,
   onChange,
+  onRegionChange,
   onCityChange,
+  onAlCityChange,
   onUpdated,
 }: {
   offsets: Offsets;
+  region: RegionKey;
   city: CityKey;
+  alCity: AlbaniaCityKey;
   remoteMeta: RemoteMeta | null;
   onClose: () => void;
   onChange: (o: Offsets) => void;
+  onRegionChange: (r: RegionKey) => void;
   onCityChange: (c: CityKey) => void;
+  onAlCityChange: (c: AlbaniaCityKey) => void;
   onUpdated: (meta: RemoteMeta) => void;
 }) {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
@@ -584,6 +592,11 @@ function SettingsModal({
       })
     : null;
 
+  const regionOptions: { key: RegionKey; label: string }[] = [
+    { key: "Kosove", label: "Kosovë 🇽🇰" },
+    { key: "Shqiperi", label: "Shqipëri 🇦🇱" },
+  ];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
@@ -597,60 +610,103 @@ function SettingsModal({
           <h2 className="text-xl font-bold">Rregullimi i kohëve</h2>
           <button
             onClick={onClose}
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="text-sm font-semibold text-primary hover:opacity-80 rounded-full px-3 py-1.5 border border-primary/40 bg-primary/10"
           >
             Mbyll
           </button>
         </div>
 
-        <div className="mb-5 rounded-2xl bg-surface p-4 border border-border">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">
-                Të dhënat BIK
+        {region === "Kosove" && (
+          <div className="mb-5 rounded-2xl bg-surface p-4 border border-border">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Të dhënat BIK
+                </div>
+                <div className="text-sm font-medium mt-1">
+                  {lastUpdated
+                    ? `Përditësuar: ${lastUpdated}${remoteMeta?.year ? ` (Takvimi ${remoteMeta.year})` : ""}`
+                    : "Po përdoren të dhënat e ndërtuara në app"}
+                </div>
               </div>
-              <div className="text-sm font-medium mt-1">
-                {lastUpdated
-                  ? `Përditësuar: ${lastUpdated}${remoteMeta?.year ? ` (Takvimi ${remoteMeta.year})` : ""}`
-                  : "Po përdoren të dhënat e ndërtuara në app"}
-              </div>
+              <button
+                onClick={handleUpdate}
+                disabled={status === "loading"}
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                <RefreshCw className={`size-4 ${status === "loading" ? "animate-spin" : ""}`} />
+                Përditëso
+              </button>
             </div>
-            <button
-              onClick={handleUpdate}
-              disabled={status === "loading"}
-              className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-            >
-              <RefreshCw className={`size-4 ${status === "loading" ? "animate-spin" : ""}`} />
-              Përditëso nga BIK
-            </button>
+            {status === "ok" && (
+              <div className="flex items-center gap-2 text-xs text-primary mt-2">
+                <Check className="size-3.5" /> Të dhënat u përditësuan me sukses.
+              </div>
+            )}
+            {status === "err" && (
+              <div className="flex items-center gap-2 text-xs text-destructive mt-2">
+                <AlertCircle className="size-3.5" /> Dështoi përditësimi: {errMsg}
+              </div>
+            )}
           </div>
-          {status === "ok" && (
-            <div className="flex items-center gap-2 text-xs text-primary mt-2">
-              <Check className="size-3.5" /> Të dhënat u përditësuan me sukses.
-            </div>
-          )}
-          {status === "err" && (
-            <div className="flex items-center gap-2 text-xs text-destructive mt-2">
-              <AlertCircle className="size-3.5" /> Dështoi përditësimi: {errMsg}
-            </div>
-          )}
+        )}
+
+        {/* Region toggle */}
+        <div className="mb-4">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            Shteti
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {regionOptions.map((r) => {
+              const active = region === r.key;
+              return (
+                <button
+                  key={r.key}
+                  onClick={() => onRegionChange(r.key)}
+                  className={[
+                    "rounded-xl px-4 py-3 text-sm font-semibold transition border",
+                    active
+                      ? "bg-primary/15 text-primary border-primary shadow-[0_0_20px_-4px_hsl(var(--primary)/0.6)]"
+                      : "bg-surface text-foreground/80 border-border hover:text-foreground hover:border-primary/40",
+                  ].join(" ")}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
+        {/* Dynamic city dropdown */}
         <div className="mb-5">
           <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
             Qyteti
           </div>
-          <select
-            value={city}
-            onChange={(e) => onCityChange(e.target.value as CityKey)}
-            className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            {(Object.keys(CITY_LABELS) as CityKey[]).map((c) => (
-              <option key={c} value={c}>{CITY_LABELS[c]}</option>
-            ))}
-          </select>
+          {region === "Kosove" ? (
+            <select
+              value={city}
+              onChange={(e) => onCityChange(e.target.value as CityKey)}
+              className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {(Object.keys(CITY_LABELS) as CityKey[]).map((c) => (
+                <option key={c} value={c}>{CITY_LABELS[c]}</option>
+              ))}
+            </select>
+          ) : (
+            <select
+              value={alCity}
+              onChange={(e) => onAlCityChange(e.target.value as AlbaniaCityKey)}
+              className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {(ALBANIA_CITIES as readonly AlbaniaCityKey[]).map((c) => (
+                <option key={c} value={c}>{ALBANIA_CITY_LABELS[c]}</option>
+              ))}
+            </select>
+          )}
           <p className="text-xs text-muted-foreground mt-2">
-            Të dhënat zyrtare nga BIK, me korrigjim minutash sipas qytetit.
+            {region === "Kosove"
+              ? "Të dhënat zyrtare nga BIK, me korrigjim minutash sipas qytetit."
+              : "Të dhënat zyrtare nga KMSH për qytetin e zgjedhur."}
           </p>
         </div>
 
@@ -690,82 +746,3 @@ function SettingsModal({
   );
 }
 
-function LocationSelector({
-  region,
-  city,
-  alCity,
-  onChange,
-}: {
-  region: RegionKey;
-  city: CityKey;
-  alCity: AlbaniaCityKey;
-  onChange: (region: RegionKey, city: AnyCityKey) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
-  const activeLabel = getCityLabel(region, activeCity);
-  const sourceLabel = region === "Shqiperi" ? "KMSH" : "BIK";
-  const regionShort = region === "Shqiperi" ? "Shqipëri" : "Kosovë";
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.25em] text-foreground/90 hover:border-primary/40 hover:text-primary transition"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <MapPin className="size-3 sm:size-[1.6vh]" />
-        <span>{activeLabel}, {regionShort} · {sourceLabel}</span>
-        <ChevronDown className={`size-3 transition ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-            aria-hidden
-          />
-          <div
-            className="absolute left-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-surface-elevated p-2 card-glow"
-            role="listbox"
-          >
-            {(["Kosove", "Shqiperi"] as RegionKey[]).map((r) => (
-              <div key={r} className="mb-1 last:mb-0">
-                <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-                  {REGION_LABELS[r]}
-                </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {(r === "Kosove"
-                    ? (Object.keys(CITY_LABELS) as CityKey[])
-                    : (ALBANIA_CITIES as readonly AlbaniaCityKey[])
-                  ).map((c) => {
-                    const isActive = region === r && activeCity === c;
-                    return (
-                      <button
-                        key={c}
-                        onClick={() => {
-                          onChange(r, c as AnyCityKey);
-                          setOpen(false);
-                        }}
-                        className={[
-                          "rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition border",
-                          isActive
-                            ? "bg-primary/20 text-primary border-primary/40"
-                            : "bg-transparent text-foreground/80 border-transparent hover:bg-surface hover:text-foreground",
-                        ].join(" ")}
-                      >
-                        {getCityLabel(r, c as AnyCityKey)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}

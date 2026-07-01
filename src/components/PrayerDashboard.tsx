@@ -232,7 +232,7 @@ export default function PrayerDashboard() {
           onDismiss={() => setAlertDismissedFor(next.key)}
         />
       )}
-      <div className="relative h-screen w-full overflow-hidden">
+      <div className="relative min-h-screen w-full pb-20">
 
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -330,38 +330,40 @@ export default function PrayerDashboard() {
             return (
               <div
                 key={k}
-                className={[
-                  "relative flex flex-col items-center justify-center rounded-3xl p-3 sm:p-[1.5vh] transition-all duration-500",
-                  isLast ? "col-span-2 sm:col-span-1" : "",
-                  isActive
-                    ? "bg-gradient-to-br from-primary/20 via-surface-elevated to-surface card-active"
-                    : "bg-surface/70 card-glow",
-                ].join(" ")}
+                  className={[
+                    "relative flex flex-col items-center justify-center gap-2 rounded-3xl p-3 sm:p-[1.5vh] transition-all duration-500",
+                    isLast ? "col-span-2 sm:col-span-1" : "",
+                    isActive
+                      ? "bg-gradient-to-br from-primary/20 via-surface-elevated to-surface card-active"
+                      : "bg-surface/70 card-glow",
+                  ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">
                     <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                     Namazi i Ardhshëm
                   </div>
                 )}
-                <Icon
-                  className={[
-                    "mb-1 sm:mb-[0.8vh] size-6 sm:size-[3.4vh]",
-                    isActive ? "text-primary" : "text-muted-foreground/70",
-                  ].join(" ")}
-                  strokeWidth={1.5}
-                />
-                <div
-                  className={[
-                    "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] text-center px-1",
-                    isActive ? "text-primary" : "text-muted-foreground",
-                  ].join(" ")}
-                >
-                  {CARD_LABELS[k]}
+                <div className="flex items-center gap-2">
+                  <Icon
+                    className={[
+                      "size-6 sm:size-[3.4vh]",
+                      isActive ? "text-primary" : "text-muted-foreground/70",
+                    ].join(" ")}
+                    strokeWidth={1.5}
+                  />
+                  <div
+                    className={[
+                      "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] whitespace-nowrap",
+                      isActive ? "text-primary" : "text-muted-foreground",
+                    ].join(" ")}
+                  >
+                    {CARD_LABELS[k]}
+                  </div>
                 </div>
                 <div
                   className={[
-                    "mt-1 sm:mt-[1.2vh] font-bold tabular-nums leading-none text-[8vw] sm:text-[6.5vh]",
+                    "font-bold tabular-nums leading-none text-[8vw] sm:text-[6.5vh]",
                     isActive ? "text-foreground" : "text-foreground/85",
                   ].join(" ")}
                 >

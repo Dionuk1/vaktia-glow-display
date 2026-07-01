@@ -200,11 +200,21 @@ export default function PrayerDashboard() {
 
   const remainingSecs = (next.minutes - nowMin) * 60;
   const isFriday = now.getDay() === 5;
+  const nearingAdhan = remainingSecs > 0 && remainingSecs <= 240 && !activePrayer;
+
+  // 4-minute proximity popup
+  const [alertDismissedFor, setAlertDismissedFor] = useState<string | null>(null);
+  useEffect(() => {
+    // Reset dismissal when the "next" prayer changes
+    setAlertDismissedFor(null);
+  }, [next.key]);
+  const showAlertPopup = nearingAdhan && alertDismissedFor !== next.key;
 
   const updateGlobalOffset = (n: number) => {
     setGlobalOffset(n);
     try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
   };
+
 
   if (!mounted) {
     // Avoid SSR/locale hydration mismatch — render blank shell

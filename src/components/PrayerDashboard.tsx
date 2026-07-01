@@ -224,7 +224,16 @@ export default function PrayerDashboard() {
 
   return (
     <div className="relative w-full min-h-screen bg-background bg-radial-glow text-foreground">
+      {showAlertPopup && (
+        <ProximityAlertPopup
+          prayerLabel={CARD_LABELS[next.key]}
+          entryTime={times[next.key]}
+          remainingSecs={remainingSecs}
+          onDismiss={() => setAlertDismissedFor(next.key)}
+        />
+      )}
       <div className="relative h-screen w-full overflow-hidden">
+
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{

@@ -32,6 +32,17 @@ const ZERO_OFFSETS: Offsets = {
   imsaku: 0, sabahu: 0, lindja: 0, dreka: 0, ikindia: 0, akshami: 0, jacia: 0,
 };
 
+const PRAYER_ICONS: Record<keyof DayTimes, typeof Sun> = {
+  imsaku: Moon,
+  sabahu: Sunrise,
+  lindja: Sun,
+  dreka: SunMedium,
+  ikindia: SunDim,
+  akshami: Sunset,
+  jacia: MoonStar,
+};
+
+
 const REGION_KEY = "vaktia-region-v1";
 const CITY_KEY = "vaktia-city-v1";
 const AL_CITY_KEY = "vaktia-al-city-v1";

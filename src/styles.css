@@ -92,9 +92,19 @@
   .card-active {
     box-shadow:
       0 0 0 2px var(--color-primary),
-      0 0 40px -5px color-mix(in oklab, var(--color-primary) 60%, transparent),
-      0 30px 60px -20px oklch(0 0 0 / 0.5);
+      0 0 60px 4px color-mix(in oklab, var(--color-primary) 55%, transparent),
+      0 0 120px 10px color-mix(in oklab, var(--color-primary) 25%, transparent),
+      0 30px 60px -20px oklch(0 0 0 / 0.55);
   }
+  .text-amber-warn {
+    color: oklch(0.82 0.16 65);
+  }
+  @keyframes amber-pulse {
+    0%, 100% { color: oklch(0.82 0.16 65); text-shadow: 0 0 20px color-mix(in oklab, oklch(0.82 0.16 65) 40%, transparent); }
+    50%      { color: oklch(0.72 0.20 40); text-shadow: 0 0 35px color-mix(in oklab, oklch(0.72 0.20 40) 60%, transparent); }
+  }
+  .animate-amber-pulse { animation: amber-pulse 1.2s ease-in-out infinite; }
+
 }
 
 @layer utilities {

@@ -339,29 +339,31 @@ export default function PrayerDashboard() {
                   ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">
+                  <div className="flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">
                     <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                     Namazi i Ardhshëm
                   </div>
                 )}
-                <Icon
-                  className={[
-                    "mb-1 sm:mb-[0.8vh] size-6 sm:size-[3.4vh]",
-                    isActive ? "text-primary" : "text-muted-foreground/70",
-                  ].join(" ")}
-                  strokeWidth={1.5}
-                />
-                <div
-                  className={[
-                    "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] text-center px-1",
-                    isActive ? "text-primary" : "text-muted-foreground",
-                  ].join(" ")}
-                >
-                  {CARD_LABELS[k]}
+                <div className="flex items-center gap-2">
+                  <Icon
+                    className={[
+                      "size-6 sm:size-[3.4vh]",
+                      isActive ? "text-primary" : "text-muted-foreground/70",
+                    ].join(" ")}
+                    strokeWidth={1.5}
+                  />
+                  <div
+                    className={[
+                      "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] whitespace-nowrap",
+                      isActive ? "text-primary" : "text-muted-foreground",
+                    ].join(" ")}
+                  >
+                    {CARD_LABELS[k]}
+                  </div>
                 </div>
                 <div
                   className={[
-                    "mt-1 sm:mt-[1.2vh] font-bold tabular-nums leading-none text-[8vw] sm:text-[6.5vh]",
+                    "font-bold tabular-nums leading-none text-[8vw] sm:text-[6.5vh]",
                     isActive ? "text-foreground" : "text-foreground/85",
                   ].join(" ")}
                 >

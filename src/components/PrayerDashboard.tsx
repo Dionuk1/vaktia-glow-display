@@ -313,27 +313,35 @@ export default function PrayerDashboard() {
 
 
         {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
-        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
+        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:flex-none sm:h-[46vh] sm:my-auto sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
           {CARD_KEYS.map((k, i) => {
             const isActive = k === next.key;
             const isLast = i === CARD_KEYS.length - 1;
+            const Icon = PRAYER_ICONS[k];
             return (
               <div
                 key={k}
                 className={[
-                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[1.5vh] transition-all duration-500",
+                  "relative flex flex-col items-center justify-center rounded-3xl p-3 sm:p-[1.5vh] transition-all duration-500",
                   isLast ? "col-span-2 sm:col-span-1" : "",
                   isActive
-                    ? "bg-gradient-to-br from-surface-elevated to-surface card-active"
+                    ? "bg-gradient-to-br from-primary/20 via-surface-elevated to-surface card-active"
                     : "bg-surface/70 card-glow",
                 ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-2 right-2 sm:top-[1.2vh] sm:right-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-2 sm:py-0.5 text-[9px] sm:text-[1.1vh] font-semibold uppercase tracking-widest text-primary">
-                    <span className="size-1.5 sm:size-1.5 animate-pulse rounded-full bg-primary" />
-                    Tjetra
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">
+                    <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                    Namazi i Ardhshëm
                   </div>
                 )}
+                <Icon
+                  className={[
+                    "mb-1 sm:mb-[0.8vh] size-6 sm:size-[3.4vh]",
+                    isActive ? "text-primary" : "text-muted-foreground/70",
+                  ].join(" ")}
+                  strokeWidth={1.5}
+                />
                 <div
                   className={[
                     "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] text-center px-1",
@@ -354,6 +362,7 @@ export default function PrayerDashboard() {
             );
           })}
         </main>
+
 
       </div>
 

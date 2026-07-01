@@ -288,11 +288,17 @@ export default function PrayerDashboard() {
                 <div className="text-sm sm:text-[2.2vh] text-foreground/80">
                   {CARD_LABELS[next.key]} pas
                 </div>
-                <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
+                <div
+                  className={[
+                    "text-3xl sm:text-[5vh] font-bold tabular-nums leading-none",
+                    nearingAdhan ? "animate-amber-pulse" : "text-primary",
+                  ].join(" ")}
+                >
                   {formatCountdown(remainingSecs)}
                 </div>
               </>
             )}
+
           </div>
         </header>
 

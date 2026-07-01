@@ -791,3 +791,53 @@ function SettingsModal({
   );
 }
 
+function ProximityAlertPopup({
+  prayerLabel,
+  entryTime,
+  remainingSecs,
+  onDismiss,
+}: {
+  prayerLabel: string;
+  entryTime: string;
+  remainingSecs: number;
+  onDismiss: () => void;
+}) {
+  const mm = Math.max(0, Math.floor(remainingSecs / 60));
+  const ss = Math.max(0, remainingSecs % 60);
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/70 backdrop-blur-md p-4 animate-in fade-in duration-300"
+      onClick={onDismiss}
+    >
+      <div
+        className="relative w-full max-w-md rounded-3xl border border-primary/40 bg-gradient-to-br from-surface-elevated via-surface to-background p-8 text-center card-active"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onDismiss}
+          className="absolute top-3 right-3 rounded-full p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition"
+          aria-label="Mbyll"
+        >
+          <X className="size-4" />
+        </button>
+        <div className="text-[10px] uppercase tracking-[0.4em] text-primary/80 mb-2">
+          • Namazi i Ardhshëm
+        </div>
+        <div className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
+          {prayerLabel}
+        </div>
+        <div className="text-6xl sm:text-7xl font-black tabular-nums leading-none animate-amber-pulse">
+          {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+        </div>
+        <div className="mt-6 text-sm uppercase tracking-[0.3em] text-muted-foreground">
+          Në orën
+        </div>
+        <div className="text-3xl font-bold tabular-nums text-primary mt-1">
+          {entryTime}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+

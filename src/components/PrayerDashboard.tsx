@@ -232,7 +232,7 @@ export default function PrayerDashboard() {
           onDismiss={() => setAlertDismissedFor(next.key)}
         />
       )}
-      <div className="relative h-screen w-full overflow-hidden">
+      <div className="relative min-h-screen w-full pb-20">
 
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"

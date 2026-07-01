@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, Hand } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, Hand, Sunrise, Sunset, Sun, SunMedium, SunDim, Moon, MoonStar, X } from "lucide-react";
 import TasbihCounter from "./TasbihCounter";
 import VoluntaryDhikr from "./VoluntaryDhikr";
 import QiblaCompass from "./QiblaCompass";
@@ -31,6 +31,17 @@ type Offsets = Record<keyof DayTimes, number>;
 const ZERO_OFFSETS: Offsets = {
   imsaku: 0, sabahu: 0, lindja: 0, dreka: 0, ikindia: 0, akshami: 0, jacia: 0,
 };
+
+const PRAYER_ICONS: Record<keyof DayTimes, typeof Sun> = {
+  imsaku: Moon,
+  sabahu: Sunrise,
+  lindja: Sun,
+  dreka: SunMedium,
+  ikindia: SunDim,
+  akshami: Sunset,
+  jacia: MoonStar,
+};
+
 
 const REGION_KEY = "vaktia-region-v1";
 const CITY_KEY = "vaktia-city-v1";
@@ -189,11 +200,21 @@ export default function PrayerDashboard() {
 
   const remainingSecs = (next.minutes - nowMin) * 60;
   const isFriday = now.getDay() === 5;
+  const nearingAdhan = remainingSecs > 0 && remainingSecs <= 240 && !activePrayer;
+
+  // 4-minute proximity popup
+  const [alertDismissedFor, setAlertDismissedFor] = useState<string | null>(null);
+  useEffect(() => {
+    // Reset dismissal when the "next" prayer changes
+    setAlertDismissedFor(null);
+  }, [next.key]);
+  const showAlertPopup = nearingAdhan && alertDismissedFor !== next.key;
 
   const updateGlobalOffset = (n: number) => {
     setGlobalOffset(n);
     try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
   };
+
 
   if (!mounted) {
     // Avoid SSR/locale hydration mismatch — render blank shell
@@ -203,7 +224,16 @@ export default function PrayerDashboard() {
 
   return (
     <div className="relative w-full min-h-screen bg-background bg-radial-glow text-foreground">
+      {showAlertPopup && (
+        <ProximityAlertPopup
+          prayerLabel={CARD_LABELS[next.key]}
+          entryTime={times[next.key]}
+          remainingSecs={remainingSecs}
+          onDismiss={() => setAlertDismissedFor(next.key)}
+        />
+      )}
       <div className="relative h-screen w-full overflow-hidden">
+
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
@@ -267,11 +297,17 @@ export default function PrayerDashboard() {
                 <div className="text-sm sm:text-[2.2vh] text-foreground/80">
                   {CARD_LABELS[next.key]} pas
                 </div>
-                <div className="text-3xl sm:text-[5vh] font-bold tabular-nums leading-none text-primary">
+                <div
+                  className={[
+                    "text-3xl sm:text-[5vh] font-bold tabular-nums leading-none",
+                    nearingAdhan ? "animate-amber-pulse" : "text-primary",
+                  ].join(" ")}
+                >
                   {formatCountdown(remainingSecs)}
                 </div>
               </>
             )}
+
           </div>
         </header>
 
@@ -286,27 +322,35 @@ export default function PrayerDashboard() {
 
 
         {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
-        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
+        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:flex-none sm:h-[46vh] sm:my-auto sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
           {CARD_KEYS.map((k, i) => {
             const isActive = k === next.key;
             const isLast = i === CARD_KEYS.length - 1;
+            const Icon = PRAYER_ICONS[k];
             return (
               <div
                 key={k}
                 className={[
-                  "relative flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl p-2 sm:p-[1.5vh] transition-all duration-500",
+                  "relative flex flex-col items-center justify-center rounded-3xl p-3 sm:p-[1.5vh] transition-all duration-500",
                   isLast ? "col-span-2 sm:col-span-1" : "",
                   isActive
-                    ? "bg-gradient-to-br from-surface-elevated to-surface card-active"
+                    ? "bg-gradient-to-br from-primary/20 via-surface-elevated to-surface card-active"
                     : "bg-surface/70 card-glow",
                 ].join(" ")}
               >
                 {isActive && (
-                  <div className="absolute top-2 right-2 sm:top-[1.2vh] sm:right-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/15 px-2 py-0.5 sm:px-2 sm:py-0.5 text-[9px] sm:text-[1.1vh] font-semibold uppercase tracking-widest text-primary">
-                    <span className="size-1.5 sm:size-1.5 animate-pulse rounded-full bg-primary" />
-                    Tjetra
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">
+                    <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+                    Namazi i Ardhshëm
                   </div>
                 )}
+                <Icon
+                  className={[
+                    "mb-1 sm:mb-[0.8vh] size-6 sm:size-[3.4vh]",
+                    isActive ? "text-primary" : "text-muted-foreground/70",
+                  ].join(" ")}
+                  strokeWidth={1.5}
+                />
                 <div
                   className={[
                     "text-[10px] sm:text-[1.8vh] font-medium uppercase tracking-[0.18em] text-center px-1",
@@ -327,6 +371,7 @@ export default function PrayerDashboard() {
             );
           })}
         </main>
+
 
       </div>
 
@@ -745,4 +790,54 @@ function SettingsModal({
     </div>
   );
 }
+
+function ProximityAlertPopup({
+  prayerLabel,
+  entryTime,
+  remainingSecs,
+  onDismiss,
+}: {
+  prayerLabel: string;
+  entryTime: string;
+  remainingSecs: number;
+  onDismiss: () => void;
+}) {
+  const mm = Math.max(0, Math.floor(remainingSecs / 60));
+  const ss = Math.max(0, remainingSecs % 60);
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-background/70 backdrop-blur-md p-4 animate-in fade-in duration-300"
+      onClick={onDismiss}
+    >
+      <div
+        className="relative w-full max-w-md rounded-3xl border border-primary/40 bg-gradient-to-br from-surface-elevated via-surface to-background p-8 text-center card-active"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onDismiss}
+          className="absolute top-3 right-3 rounded-full p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground transition"
+          aria-label="Mbyll"
+        >
+          <X className="size-4" />
+        </button>
+        <div className="text-[10px] uppercase tracking-[0.4em] text-primary/80 mb-2">
+          • Namazi i Ardhshëm
+        </div>
+        <div className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
+          {prayerLabel}
+        </div>
+        <div className="text-6xl sm:text-7xl font-black tabular-nums leading-none animate-amber-pulse">
+          {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+        </div>
+        <div className="mt-6 text-sm uppercase tracking-[0.3em] text-muted-foreground">
+          Në orën
+        </div>
+        <div className="text-3xl font-bold tabular-nums text-primary mt-1">
+          {entryTime}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 

@@ -330,13 +330,13 @@ export default function PrayerDashboard() {
             return (
               <div
                 key={k}
-                className={[
-                  "relative flex flex-col items-center justify-center rounded-3xl p-3 sm:p-[1.5vh] transition-all duration-500",
-                  isLast ? "col-span-2 sm:col-span-1" : "",
-                  isActive
-                    ? "bg-gradient-to-br from-primary/20 via-surface-elevated to-surface card-active"
-                    : "bg-surface/70 card-glow",
-                ].join(" ")}
+                  className={[
+                    "relative flex flex-col items-center justify-center gap-2 rounded-3xl p-3 sm:p-[1.5vh] transition-all duration-500",
+                    isLast ? "col-span-2 sm:col-span-1" : "",
+                    isActive
+                      ? "bg-gradient-to-br from-primary/20 via-surface-elevated to-surface card-active"
+                      : "bg-surface/70 card-glow",
+                  ].join(" ")}
               >
                 {isActive && (
                   <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-[1.2vh] flex items-center gap-1.5 rounded-full bg-primary/20 px-2.5 py-0.5 text-[8px] sm:text-[1vh] font-semibold uppercase tracking-[0.15em] text-primary whitespace-nowrap">

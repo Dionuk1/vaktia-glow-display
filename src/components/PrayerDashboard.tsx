@@ -804,8 +804,16 @@ function ProximityAlertPopup({
   remainingSecs: number;
   onDismiss: () => void;
 }) {
-  const mm = Math.max(0, Math.floor(remainingSecs / 60));
-  const ss = Math.max(0, remainingSecs % 60);
+  const flooredSecs = Math.max(0, Math.floor(remainingSecs));
+  const mm = Math.floor(flooredSecs / 60);
+  const ss = flooredSecs % 60;
+
+  useEffect(() => {
+    if (flooredSecs <= 0) {
+      onDismiss();
+    }
+  }, [flooredSecs, onDismiss]);
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-background/70 backdrop-blur-md p-4 animate-in fade-in duration-300"
@@ -828,8 +836,10 @@ function ProximityAlertPopup({
         <div className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
           {prayerLabel}
         </div>
-        <div className="text-6xl sm:text-7xl font-black tabular-nums leading-none animate-amber-pulse">
-          {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+        <div className="px-2">
+          <div className="text-6xl sm:text-7xl font-black tabular-nums leading-none text-foreground animate-gentle-pulse">
+            {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+          </div>
         </div>
         <div className="mt-6 text-sm uppercase tracking-[0.3em] text-muted-foreground">
           Në orën

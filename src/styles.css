@@ -121,4 +121,17 @@
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
   }
+  @keyframes gentle-pulse {
+    0%, 100% {
+      opacity: 1;
+      text-shadow: 0 0 20px color-mix(in oklab, var(--color-primary) 35%, transparent);
+    }
+    50% {
+      opacity: 0.85;
+      text-shadow: 0 0 40px color-mix(in oklab, var(--color-primary) 60%, transparent);
+    }
+  }
+  .animate-gentle-pulse {
+    animation: gentle-pulse 2.4s ease-in-out infinite;
+  }
 }

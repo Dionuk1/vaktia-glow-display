@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const QIBLA = 137; // Qibla angle for Kosovo
 
@@ -15,58 +15,55 @@ function detectPlatform(): Platform {
   return "ios";
 }
 
+function isIOSDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  // Detect iPhone/iPad/iPod plus iPadOS masquerading as Mac with touch
+  return /iPad|iPhone|iPod/.test(ua) ||
+    (ua.includes("Mac") && "ontouchend" in document);
+}
+
+type CompassStatus =
+  | "checking"          // initial, listener attached, waiting for events
+  | "insecure"          // page not on HTTPS
+  | "needs-permission"  // iOS 13+ requires user gesture
+  | "denied"            // user denied permission
+  | "active"            // receiving orientation data
+  | "unsupported";      // truly no sensor after grace period
+
 export default function QiblaCompass() {
   const [heading, setHeading] = useState<number | null>(null);
-  const [supported, setSupported] = useState<boolean>(false);
-  const [needsPermission, setNeedsPermission] = useState<boolean>(false);
   const [platform, setPlatform] = useState<Platform>("ios");
+  const [status, setStatus] = useState<CompassStatus>("checking");
   const smoothedRef = useRef<number | null>(null);
+  const gotEventRef = useRef(false);
+  const attachedRef = useRef(false);
 
   useEffect(() => {
     setPlatform(detectPlatform());
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const DOE = (window as unknown as { DeviceOrientationEvent?: DeviceOrientationEventiOS })
-      .DeviceOrientationEvent;
-    if (!DOE) return;
-    setSupported(true);
-
-    // Reset heading and smoothing state when switching platform
-    setHeading(null);
-    smoothedRef.current = null;
-
-    if (platform === "ios" && typeof DOE.requestPermission === "function") {
-      setNeedsPermission(true);
-      return () => detach();
-    }
-
-    setNeedsPermission(false);
-    attach();
-    return () => detach();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platform]);
-
   const normalizeHeading = (value: number) => ((value % 360) + 360) % 360;
 
-  const handleIOSCompass = (e: DeviceOrientationEvent) => {
+  const handleIOSCompass = useCallback((e: DeviceOrientationEvent) => {
     let h: number | null = null;
-
     const wk = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
     if (typeof wk === "number") {
       h = wk;
     } else if (typeof e.alpha === "number") {
       h = 360 - e.alpha;
     }
-
     if (h !== null && !Number.isNaN(h)) {
+      gotEventRef.current = true;
+      setStatus("active");
       setHeading(normalizeHeading(h));
     }
-  };
+  }, []);
 
-  const handleAndroidCompass = (event: DeviceOrientationEvent) => {
+  const handleAndroidCompass = useCallback((event: DeviceOrientationEvent) => {
     if (typeof event.alpha !== "number" || Number.isNaN(event.alpha)) return;
+    gotEventRef.current = true;
+    setStatus("active");
 
     const rawHeading = normalizeHeading(event.alpha);
     const current = smoothedRef.current;
@@ -84,19 +81,73 @@ export default function QiblaCompass() {
     const next = normalizeHeading(current + diff * 0.1);
     smoothedRef.current = next;
     setHeading(next);
-  };
+  }, []);
 
-  const attach = () => {
-    if (platform === "android") {
-      window.addEventListener("deviceorientationabsolute", handleAndroidCompass as EventListener, true);
+  const attach = useCallback(() => {
+    if (attachedRef.current) return;
+    attachedRef.current = true;
+    // Attach both — some Android browsers only fire the generic event
+    window.addEventListener("deviceorientationabsolute", handleAndroidCompass as EventListener, true);
+    window.addEventListener("deviceorientation", platform === "android" ? (handleAndroidCompass as EventListener) : handleIOSCompass, true);
+  }, [platform, handleAndroidCompass, handleIOSCompass]);
+
+  const detach = useCallback(() => {
+    attachedRef.current = false;
+    window.removeEventListener("deviceorientationabsolute", handleAndroidCompass as EventListener, true);
+    window.removeEventListener("deviceorientation", handleAndroidCompass as EventListener, true);
+    window.removeEventListener("deviceorientation", handleIOSCompass, true);
+  }, [handleAndroidCompass, handleIOSCompass]);
+
+  const init = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    // Reset
+    setHeading(null);
+    smoothedRef.current = null;
+    gotEventRef.current = false;
+    detach();
+
+    // HTTPS check — sensor APIs are blocked on insecure origins (localhost is OK)
+    const proto = window.location.protocol;
+    const host = window.location.hostname;
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    if (proto !== "https:" && !isLocal) {
+      setStatus("insecure");
       return;
     }
-    window.addEventListener("deviceorientation", handleIOSCompass, true);
-  };
-  const detach = () => {
-    window.removeEventListener("deviceorientationabsolute", handleAndroidCompass as EventListener, true);
-    window.removeEventListener("deviceorientation", handleIOSCompass, true);
-  };
+
+    const DOE = (window as unknown as { DeviceOrientationEvent?: DeviceOrientationEventiOS })
+      .DeviceOrientationEvent;
+
+    if (!DOE) {
+      setStatus("unsupported");
+      return;
+    }
+
+    // iOS 13+ permission gate — must be triggered by user gesture
+    if (isIOSDevice() && typeof DOE.requestPermission === "function") {
+      setStatus("needs-permission");
+      return;
+    }
+
+    setStatus("checking");
+    attach();
+
+    // Grace window — if no orientation event fires within ~3.5s, declare unsupported
+    const timer = window.setTimeout(() => {
+      if (!gotEventRef.current) setStatus((s) => (s === "checking" ? "unsupported" : s));
+    }, 3500);
+    return () => window.clearTimeout(timer);
+  }, [attach, detach]);
+
+  useEffect(() => {
+    const cleanupTimer = init();
+    return () => {
+      if (typeof cleanupTimer === "function") cleanupTimer();
+      detach();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform]);
 
   const requestPerm = async () => {
     const DOE = (window as unknown as { DeviceOrientationEvent?: DeviceOrientationEventiOS })
@@ -104,11 +155,16 @@ export default function QiblaCompass() {
     try {
       const res = await DOE?.requestPermission?.();
       if (res === "granted") {
-        setNeedsPermission(false);
+        setStatus("checking");
         attach();
+        window.setTimeout(() => {
+          if (!gotEventRef.current) setStatus((s) => (s === "checking" ? "unsupported" : s));
+        }, 3500);
+      } else {
+        setStatus("denied");
       }
     } catch {
-      /* noop */
+      setStatus("denied");
     }
   };
 
@@ -261,19 +317,31 @@ export default function QiblaCompass() {
           </div>
         ) : (
           <div className="rounded-full bg-surface-elevated px-3 py-1 border border-border text-muted-foreground">
-            {supported ? "Statike" : "Pa sensor"}
+            {status === "checking" ? "Duke kërkuar sensorin…" : status === "active" ? "Statike" : "Pa sensor"}
           </div>
         )}
       </div>
 
-      {needsPermission && (
+      {(status === "needs-permission" || status === "denied") && (
         <button
           type="button"
           onClick={requestPerm}
-          className="mt-3 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium"
+          className="mt-3 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold shadow-[0_0_18px_color-mix(in_oklab,var(--color-primary)_60%,transparent)]"
         >
-          Aktivizo busullën
+          Aktivizo Busullën 🧭
         </button>
+      )}
+
+      {status === "denied" && (
+        <p className="mt-2 text-xs text-destructive text-center max-w-xs">
+          Leja u refuzua. Klikoni sërish për të lejuar qasjen te sensori.
+        </p>
+      )}
+
+      {status === "insecure" && (
+        <p className="mt-3 text-xs text-destructive text-center max-w-xs">
+          Busulla kërkon lidhje të sigurt (HTTPS).
+        </p>
       )}
 
       {aligned && (
@@ -283,11 +351,15 @@ export default function QiblaCompass() {
       )}
 
       <p className="mt-3 text-xs text-muted-foreground text-center max-w-xs">
-        {heading === null
+        {status === "unsupported"
           ? "Pajisja juaj nuk e mbështet busullën — shenja e gjelbër tregon 137° si referencë fikse."
-          : platform === "android"
-            ? "Android: mbani telefonin horizontalisht dhe kalibrojeni duke e tundur në formë '8'. Pastaj rrotullohuni derisa shigjeta të përputhet me shenjën e gjelbër."
-            : "Mbani telefonin drejt dhe rrotullohuni derisa shigjeta lart të përputhet me shenjën e gjelbër."}
+          : status === "needs-permission"
+            ? "Në iPhone/iPad duhet leja juaj për të përdorur sensorin. Prekni butonin lart për ta aktivizuar."
+            : status === "checking"
+              ? "Duke kontrolluar sensorin e busullës…"
+              : platform === "android"
+                ? "Android: mbani telefonin horizontalisht dhe kalibrojeni duke e tundur në formë '8'. Pastaj rrotullohuni derisa shigjeta të përputhet me shenjën e gjelbër."
+                : "Mbani telefonin drejt dhe rrotullohuni derisa shigjeta lart të përputhet me shenjën e gjelbër."}
         {" "}Drejtimi nga Kosova drejt Qabesë: <span className="text-primary font-semibold">137° (jug-juglindje)</span>.
       </p>
     </div>

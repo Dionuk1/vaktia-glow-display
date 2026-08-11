@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Menu,
   X,
@@ -152,6 +153,9 @@ export default function FeaturesDrawer() {
   const { t } = useLang();
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState<FeatureId | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -176,6 +180,7 @@ export default function FeaturesDrawer() {
       </button>
 
       {/* Drawer */}
+      {mounted && createPortal(
       <div
         className={[
           "fixed inset-0 z-[60] transition-opacity duration-300",
@@ -256,7 +261,7 @@ export default function FeaturesDrawer() {
             </div>
           </div>
         </aside>
-      </div>
+      </div>, document.body)}
 
       <FeatureModalHost open={modal} onClose={() => setModal(null)} />
     </>

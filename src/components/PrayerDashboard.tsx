@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, Hand, Sunrise, Sunset, Sun, SunMedium, SunDim, Moon, MoonStar, X } from "lucide-react";
+import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, Hand, Sunrise, Sunset, Sun, SunMedium, SunDim, Moon, MoonStar, X, Sparkles } from "lucide-react";
 import TasbihCounter from "./TasbihCounter";
 import VoluntaryDhikr from "./VoluntaryDhikr";
 import QiblaCompass from "./QiblaCompass";
+import FeaturesDrawer, { FeatureShowcaseGrid, FeatureModalHost } from "./FeaturesDrawer";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,
@@ -255,6 +256,9 @@ export default function PrayerDashboard() {
 
           {/* Location + date */}
           <div className="order-2 flex flex-col items-center gap-1.5 text-center sm:order-1 sm:items-start sm:text-left">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <FeaturesDrawer />
+            </div>
             <button
               onClick={() => setShowSettings(true)}
               className="flex items-center gap-1.5 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.25em] text-foreground/90 hover:border-primary/40 hover:text-primary transition"
@@ -454,6 +458,7 @@ function ExtraSection({
   const year = now.getFullYear();
   const today = now.getDate();
   const isAlbania = region === "Shqiperi";
+  const [featureModal, setFeatureModal] = useState<Parameters<typeof FeatureModalHost>[0]["open"]>(null);
 
   const rows = useMemo(
     () => getMonthTimesForLocation(year, month, region, city).map((r) => ({
@@ -490,6 +495,14 @@ function ExtraSection({
       <div>
         <VoluntaryDhikr />
       </div>
+      {/* Features showcase */}
+      <div id="features">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
+          <Sparkles className="size-4" /> Veçoritë e VaktiaKS
+        </div>
+        <FeatureShowcaseGrid onOpen={setFeatureModal} />
+      </div>
+      <FeatureModalHost open={featureModal} onClose={() => setFeatureModal(null)} />
 
 
       {/* Monthly table */}

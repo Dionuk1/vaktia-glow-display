@@ -490,6 +490,14 @@ function ExtraSection({
       <div>
         <VoluntaryDhikr />
       </div>
+      {/* Features showcase */}
+      <div id="features">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
+          <Sparkles className="size-4" /> Veçoritë e VaktiaKS
+        </div>
+        <FeatureShowcaseGrid onOpen={setFeatureModal} />
+      </div>
+      <FeatureModalHost open={featureModal} onClose={() => setFeatureModal(null)} />
 
 
       {/* Monthly table */}

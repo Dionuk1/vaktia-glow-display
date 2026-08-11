@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logDhikr } from "@/lib/dhikr-log";
 import { RotateCcw, Check, Sparkles } from "lucide-react";
 
 type Dhikr = {
@@ -71,6 +72,7 @@ export default function VoluntaryDhikr() {
   const handleTap = () => {
     if (done) return;
     const next = count + 1;
+    logDhikr(1);
     if (next >= selected.target) {
       setCount(selected.target);
       setTimeout(() => setDone(true), 200);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logDhikr } from "@/lib/dhikr-log";
 import { RotateCcw, Check } from "lucide-react";
 
 type Stage = {
@@ -54,6 +55,7 @@ export default function TasbihCounter() {
   const handleTap = () => {
     if (done) return;
     const next = count + 1;
+    logDhikr(1);
     if (next >= stage.target) {
       // advance
       if (stageIdx >= STAGES.length - 1) {

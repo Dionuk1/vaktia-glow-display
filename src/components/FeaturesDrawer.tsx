@@ -208,14 +208,28 @@ export default function FeaturesDrawer() {
 
   return (
     <>
-      <button
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label="Njoftime"
+        onClick={() => openFeature("widget")}
+        className="grid size-9 place-items-center rounded-full border border-border bg-surface/60 text-foreground/80 backdrop-blur transition hover:border-primary/40 hover:text-primary"
+      >
+        <Bell className="size-4" />
+      </motion.button>
+
+      <motion.button
         onClick={() => setOpen(true)}
         aria-label={t("menu")}
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-2 text-foreground/90 backdrop-blur transition hover:border-primary/40 hover:text-primary active:scale-95"
+        whileHover={{ scale: 1.025, translateY: -2 }}
+        whileTap={{ scale: 0.97 }}
+        className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-2 text-foreground/90 backdrop-blur transition hover:border-primary/40 hover:text-primary"
       >
         <Menu className="size-5" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.25em]">{t("menu")}</span>
-      </button>
+        <span className="hidden text-[11px] font-semibold uppercase tracking-[0.25em] sm:inline">
+          {t("menu")}
+        </span>
+      </motion.button>
 
       {/* Drawer */}
       {mounted && createPortal(
@@ -232,11 +246,12 @@ export default function FeaturesDrawer() {
         />
         <aside
           className={[
-            "absolute inset-y-0 left-0 flex w-[92vw] max-w-md flex-col border-r border-primary/25 bg-surface/95 backdrop-blur",
-            "shadow-[20px_0_60px_-30px_var(--color-primary)] transition-transform duration-300 ease-out",
-            open ? "translate-x-0" : "-translate-x-full",
+            "absolute inset-y-0 right-0 flex w-[92vw] max-w-md flex-col border-l border-primary/25 bg-surface/95 backdrop-blur",
+            "shadow-[-20px_0_60px_-30px_var(--color-primary)] transition-transform duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]",
+            open ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
         >
+
           <div className="flex items-center justify-between gap-3 border-b border-primary/20 p-4">
             <div className="flex min-w-0 items-center gap-2">
               <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_12px_var(--color-primary)]" />

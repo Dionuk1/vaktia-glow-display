@@ -246,7 +246,7 @@ export default function FeaturesDrawer() {
         />
         <aside
           className={[
-            "absolute inset-y-0 right-0 flex w-[92vw] max-w-md flex-col border-l border-primary/25 bg-surface/95 backdrop-blur",
+            "absolute inset-y-0 right-0 z-10 flex w-[92vw] max-w-md flex-col border-l border-primary/25 bg-surface/95 backdrop-blur",
             "shadow-[-20px_0_60px_-30px_var(--color-primary)] transition-transform duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]",
             open ? "translate-x-0" : "translate-x-full",
           ].join(" ")}

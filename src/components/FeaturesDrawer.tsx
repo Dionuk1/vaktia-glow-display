@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import {
   Menu,
   X,
@@ -12,6 +13,8 @@ import {
   ListOrdered,
   ChevronRight,
   Info,
+  BookOpen,
+  Bell,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import {
@@ -23,6 +26,9 @@ import {
   StreaksModal,
   WidgetModal,
 } from "./FeatureModals";
+import { NamazGuideModal } from "./NamazGuide";
+import { AboutModal, PrivacyModal, TermsModal } from "./LegalModals";
+import { onOpenModule } from "@/lib/modules";
 
 type FeatureId =
   | "analytics"
@@ -31,13 +37,17 @@ type FeatureId =
   | "mosque"
   | "langs"
   | "widget"
-  | "rekate";
+  | "rekate"
+  | "guide"
+  | "about"
+  | "terms"
+  | "privacy";
 
 type BadgeKind = "new" | "newF" | "updated" | "soon";
 
 const BADGE_STYLE: Record<BadgeKind, string> = {
-  new: "bg-[#10B981] text-[#052e23]",
-  newF: "bg-[#10B981] text-[#052e23]",
+  new: "bg-[#00D9A3] text-[#052e23]",
+  newF: "bg-[#B6FF2E] text-[#152600]",
   updated: "bg-[#06B6D4] text-[#04212a]",
   soon: "bg-[#F59E0B] text-[#2b1a00]",
 };
@@ -49,6 +59,7 @@ const FEATURES: {
   subKey: string;
   badge: BadgeKind;
 }[] = [
+  { id: "guide", icon: BookOpen, titleKey: "guide", subKey: "guideSub", badge: "new" },
   { id: "analytics", icon: BarChart3, titleKey: "analytics", subKey: "analyticsSub", badge: "updated" },
   { id: "kaza", icon: CheckCircle2, titleKey: "kaza", subKey: "kazaSub", badge: "new" },
   { id: "streaks", icon: Trophy, titleKey: "streaks", subKey: "streaksSub", badge: "new" },
@@ -56,6 +67,7 @@ const FEATURES: {
   { id: "langs", icon: Languages, titleKey: "langs", subKey: "langsSub", badge: "updated" },
   { id: "widget", icon: LayoutGrid, titleKey: "widget", subKey: "widgetSub", badge: "soon" },
 ];
+
 
 export function FeatureCard({
   icon: Icon,

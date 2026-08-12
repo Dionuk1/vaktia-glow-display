@@ -85,9 +85,12 @@ export function FeatureCard({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-2xl border border-emerald-500/30 bg-surface/70 p-4 pt-9 text-left transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_40px_-12px_var(--color-primary)] active:scale-[0.99]"
+      whileHover={{ scale: 1.025, translateY: -2 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 380, damping: 22 }}
+      className="group relative w-full overflow-hidden rounded-2xl border border-primary/25 bg-surface/70 p-4 pt-9 text-left transition-colors duration-300 hover:border-primary/50 hover:shadow-[0_0_40px_-12px_var(--color-primary)]"
     >
       <span
         className={[
@@ -111,7 +114,7 @@ export function FeatureCard({
         </span>
         <ChevronRight className="mt-2 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -158,8 +161,31 @@ export function FeatureModalHost({
       return <WidgetModal onClose={onClose} />;
     case "rekate":
       return <RekateModal onClose={onClose} />;
+    case "guide":
+      return <NamazGuideModal onClose={onClose} />;
+    case "about":
+      return <AboutModal onClose={onClose} />;
+    case "terms":
+      return <TermsModal onClose={onClose} />;
+    case "privacy":
+      return <PrivacyModal onClose={onClose} />;
   }
 }
+
+/** Listens for global openModule() events and renders the matching modal. */
+export function GlobalModuleHost() {
+  const [open, setOpen] = useState<FeatureId | null>(null);
+  useEffect(
+    () =>
+      onOpenModule((id) => {
+        if (id === "cookies") return;
+        setOpen(id as FeatureId);
+      }),
+    [],
+  );
+  return <FeatureModalHost open={open} onClose={() => setOpen(null)} />;
+}
+
 
 export default function FeaturesDrawer() {
   const { t } = useLang();

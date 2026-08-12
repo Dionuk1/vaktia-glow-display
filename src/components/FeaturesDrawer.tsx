@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import {
   Menu,
   X,
@@ -12,6 +13,8 @@ import {
   ListOrdered,
   ChevronRight,
   Info,
+  BookOpen,
+  Bell,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import {
@@ -23,6 +26,9 @@ import {
   StreaksModal,
   WidgetModal,
 } from "./FeatureModals";
+import { NamazGuideModal } from "./NamazGuide";
+import { AboutModal, PrivacyModal, TermsModal } from "./LegalModals";
+import { onOpenModule } from "@/lib/modules";
 
 type FeatureId =
   | "analytics"
@@ -31,13 +37,17 @@ type FeatureId =
   | "mosque"
   | "langs"
   | "widget"
-  | "rekate";
+  | "rekate"
+  | "guide"
+  | "about"
+  | "terms"
+  | "privacy";
 
 type BadgeKind = "new" | "newF" | "updated" | "soon";
 
 const BADGE_STYLE: Record<BadgeKind, string> = {
-  new: "bg-[#10B981] text-[#052e23]",
-  newF: "bg-[#10B981] text-[#052e23]",
+  new: "bg-[#00D9A3] text-[#052e23]",
+  newF: "bg-[#B6FF2E] text-[#152600]",
   updated: "bg-[#06B6D4] text-[#04212a]",
   soon: "bg-[#F59E0B] text-[#2b1a00]",
 };
@@ -49,6 +59,7 @@ const FEATURES: {
   subKey: string;
   badge: BadgeKind;
 }[] = [
+  { id: "guide", icon: BookOpen, titleKey: "guide", subKey: "guideSub", badge: "new" },
   { id: "analytics", icon: BarChart3, titleKey: "analytics", subKey: "analyticsSub", badge: "updated" },
   { id: "kaza", icon: CheckCircle2, titleKey: "kaza", subKey: "kazaSub", badge: "new" },
   { id: "streaks", icon: Trophy, titleKey: "streaks", subKey: "streaksSub", badge: "new" },
@@ -56,6 +67,7 @@ const FEATURES: {
   { id: "langs", icon: Languages, titleKey: "langs", subKey: "langsSub", badge: "updated" },
   { id: "widget", icon: LayoutGrid, titleKey: "widget", subKey: "widgetSub", badge: "soon" },
 ];
+
 
 export function FeatureCard({
   icon: Icon,
@@ -73,9 +85,12 @@ export function FeatureCard({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-2xl border border-emerald-500/30 bg-surface/70 p-4 pt-9 text-left transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_40px_-12px_var(--color-primary)] active:scale-[0.99]"
+      whileHover={{ scale: 1.025, translateY: -2 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 380, damping: 22 }}
+      className="group relative w-full overflow-hidden rounded-2xl border border-primary/25 bg-surface/70 p-4 pt-9 text-left transition-colors duration-300 hover:border-primary/50 hover:shadow-[0_0_40px_-12px_var(--color-primary)]"
     >
       <span
         className={[
@@ -99,7 +114,7 @@ export function FeatureCard({
         </span>
         <ChevronRight className="mt-2 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -146,8 +161,31 @@ export function FeatureModalHost({
       return <WidgetModal onClose={onClose} />;
     case "rekate":
       return <RekateModal onClose={onClose} />;
+    case "guide":
+      return <NamazGuideModal onClose={onClose} />;
+    case "about":
+      return <AboutModal onClose={onClose} />;
+    case "terms":
+      return <TermsModal onClose={onClose} />;
+    case "privacy":
+      return <PrivacyModal onClose={onClose} />;
   }
 }
+
+/** Listens for global openModule() events and renders the matching modal. */
+export function GlobalModuleHost() {
+  const [open, setOpen] = useState<FeatureId | null>(null);
+  useEffect(
+    () =>
+      onOpenModule((id) => {
+        if (id === "cookies") return;
+        setOpen(id as FeatureId);
+      }),
+    [],
+  );
+  return <FeatureModalHost open={open} onClose={() => setOpen(null)} />;
+}
+
 
 export default function FeaturesDrawer() {
   const { t } = useLang();
@@ -170,14 +208,28 @@ export default function FeaturesDrawer() {
 
   return (
     <>
-      <button
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label="Njoftime"
+        onClick={() => openFeature("widget")}
+        className="grid size-9 place-items-center rounded-full border border-border bg-surface/60 text-foreground/80 backdrop-blur transition hover:border-primary/40 hover:text-primary"
+      >
+        <Bell className="size-4" />
+      </motion.button>
+
+      <motion.button
         onClick={() => setOpen(true)}
         aria-label={t("menu")}
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-2 text-foreground/90 backdrop-blur transition hover:border-primary/40 hover:text-primary active:scale-95"
+        whileHover={{ scale: 1.025, translateY: -2 }}
+        whileTap={{ scale: 0.97 }}
+        className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-3 py-2 text-foreground/90 backdrop-blur transition hover:border-primary/40 hover:text-primary"
       >
         <Menu className="size-5" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.25em]">{t("menu")}</span>
-      </button>
+        <span className="hidden text-[11px] font-semibold uppercase tracking-[0.25em] sm:inline">
+          {t("menu")}
+        </span>
+      </motion.button>
 
       {/* Drawer */}
       {mounted && createPortal(
@@ -194,11 +246,12 @@ export default function FeaturesDrawer() {
         />
         <aside
           className={[
-            "absolute inset-y-0 left-0 flex w-[92vw] max-w-md flex-col border-r border-primary/25 bg-surface/95 backdrop-blur",
-            "shadow-[20px_0_60px_-30px_var(--color-primary)] transition-transform duration-300 ease-out",
-            open ? "translate-x-0" : "-translate-x-full",
+            "absolute inset-y-0 right-0 z-10 flex w-[92vw] max-w-md flex-col border-l border-primary/25 bg-surface/95 backdrop-blur",
+            "shadow-[-20px_0_60px_-30px_var(--color-primary)] transition-transform duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]",
+            open ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
         >
+
           <div className="flex items-center justify-between gap-3 border-b border-primary/20 p-4">
             <div className="flex min-w-0 items-center gap-2">
               <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_12px_var(--color-primary)]" />

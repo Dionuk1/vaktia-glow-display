@@ -3,7 +3,10 @@ import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, 
 import TasbihCounter from "./TasbihCounter";
 import VoluntaryDhikr from "./VoluntaryDhikr";
 import QiblaCompass from "./QiblaCompass";
-import FeaturesDrawer, { FeatureShowcaseGrid, FeatureModalHost } from "./FeaturesDrawer";
+import FeaturesDrawer, { FeatureShowcaseGrid, FeatureModalHost, GlobalModuleHost } from "./FeaturesDrawer";
+import SiteHeader from "./SiteHeader";
+import SiteFooter from "./SiteFooter";
+import CookieConsent from "./CookieConsent";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,
@@ -233,7 +236,8 @@ export default function PrayerDashboard() {
           onDismiss={() => setAlertDismissedFor(next.key)}
         />
       )}
-      <div className="relative min-h-screen w-full pb-20">
+      <SiteHeader menu={<FeaturesDrawer />} />
+      <div id="kreu" className="relative min-h-screen w-full pb-20">
 
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -256,9 +260,6 @@ export default function PrayerDashboard() {
 
           {/* Location + date */}
           <div className="order-2 flex flex-col items-center gap-1.5 text-center sm:order-1 sm:items-start sm:text-left">
-            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-              <FeaturesDrawer />
-            </div>
             <button
               onClick={() => setShowSettings(true)}
               className="flex items-center gap-1.5 rounded-full border border-border bg-surface/60 px-3 py-1.5 text-[11px] sm:text-[1.5vh] uppercase tracking-[0.25em] text-foreground/90 hover:border-primary/40 hover:text-primary transition"
@@ -326,7 +327,7 @@ export default function PrayerDashboard() {
 
 
         {/* GRID — 7 cards: mobile 2 cols (last spans 2), desktop 7 cols × 1 row */}
-        <main className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:flex-none sm:h-[46vh] sm:my-auto sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
+        <main id="namazet" className="grid flex-1 min-h-0 grid-cols-2 grid-rows-4 gap-3 sm:flex-none sm:h-[46vh] sm:my-auto sm:grid-cols-7 sm:grid-rows-1 sm:gap-[1.5vh]">
           {CARD_KEYS.map((k, i) => {
             const isActive = k === next.key;
             const isLast = i === CARD_KEYS.length - 1;
@@ -432,6 +433,9 @@ export default function PrayerDashboard() {
           }}
         />
       )}
+      <SiteFooter />
+      <CookieConsent />
+      <GlobalModuleHost />
     </div>
   );
 }
@@ -471,7 +475,7 @@ function ExtraSection({
   return (
     <section id="more" className="relative w-full px-3 py-8 sm:px-[3vw] sm:py-12 space-y-6 sm:space-y-10">
       {/* Busulla-Kibla card */}
-      <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
+      <div id="kibla" className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
             <Compass className="size-4" /> Busulla-Kibla
@@ -484,7 +488,7 @@ function ExtraSection({
       </div>
 
       {/* Dhikr / Tasbih counter */}
-      <div>
+      <div id="dhikr">
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
           <Hand className="size-4" /> Tesbihu pas namazit
         </div>
@@ -506,7 +510,7 @@ function ExtraSection({
 
 
       {/* Monthly table */}
-      <div className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">
+      <div id="kalendari" className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">
         <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-border">
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">

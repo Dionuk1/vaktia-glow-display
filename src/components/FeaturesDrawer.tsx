@@ -9,12 +9,11 @@ import {
   Trophy,
   MapPin,
   Languages,
-  LayoutGrid,
+  Moon,
   ListOrdered,
   ChevronRight,
   Info,
   BookOpen,
-  Bell,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import {
@@ -24,9 +23,10 @@ import {
   MosqueModal,
   RekateModal,
   StreaksModal,
-  WidgetModal,
 } from "./FeatureModals";
 import { NamazGuideModal } from "./NamazGuide";
+import { RamadanModal } from "./RamadanCountdown";
+import { NotificationBell, NotificationsModal } from "./NotificationCenter";
 import { AboutModal, PrivacyModal, TermsModal } from "./LegalModals";
 import { onOpenModule } from "@/lib/modules";
 
@@ -36,7 +36,7 @@ type FeatureId =
   | "streaks"
   | "mosque"
   | "langs"
-  | "widget"
+  | "ramadan"
   | "rekate"
   | "guide"
   | "about"
@@ -59,13 +59,13 @@ const FEATURES: {
   subKey: string;
   badge: BadgeKind;
 }[] = [
+  { id: "ramadan", icon: Moon, titleKey: "ramadan", subKey: "ramadanSub", badge: "soon" },
   { id: "guide", icon: BookOpen, titleKey: "guide", subKey: "guideSub", badge: "new" },
   { id: "analytics", icon: BarChart3, titleKey: "analytics", subKey: "analyticsSub", badge: "updated" },
   { id: "kaza", icon: CheckCircle2, titleKey: "kaza", subKey: "kazaSub", badge: "new" },
   { id: "streaks", icon: Trophy, titleKey: "streaks", subKey: "streaksSub", badge: "new" },
   { id: "mosque", icon: MapPin, titleKey: "mosque", subKey: "mosqueSub", badge: "newF" },
   { id: "langs", icon: Languages, titleKey: "langs", subKey: "langsSub", badge: "updated" },
-  { id: "widget", icon: LayoutGrid, titleKey: "widget", subKey: "widgetSub", badge: "soon" },
 ];
 
 
@@ -157,8 +157,8 @@ export function FeatureModalHost({
       return <MosqueModal onClose={onClose} />;
     case "langs":
       return <LanguageModal onClose={onClose} />;
-    case "widget":
-      return <WidgetModal onClose={onClose} />;
+    case "ramadan":
+      return <RamadanModal onClose={onClose} />;
     case "rekate":
       return <RekateModal onClose={onClose} />;
     case "guide":
@@ -192,6 +192,7 @@ export default function FeaturesDrawer() {
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState<FeatureId | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [notif, setNotif] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -208,15 +209,7 @@ export default function FeaturesDrawer() {
 
   return (
     <>
-      <motion.button
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label="Njoftime"
-        onClick={() => openFeature("widget")}
-        className="grid size-9 place-items-center rounded-full border border-border bg-surface/60 text-foreground/80 backdrop-blur transition hover:border-primary/40 hover:text-primary"
-      >
-        <Bell className="size-4" />
-      </motion.button>
+      <NotificationBell onClick={() => setNotif(true)} />
 
       <motion.button
         onClick={() => setOpen(true)}
@@ -316,6 +309,7 @@ export default function FeaturesDrawer() {
         </aside>
       </div>, document.body)}
 
+      {notif && <NotificationsModal onClose={() => setNotif(false)} />}
       <FeatureModalHost open={modal} onClose={() => setModal(null)} />
     </>
   );

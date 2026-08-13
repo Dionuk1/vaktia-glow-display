@@ -6,6 +6,8 @@ import QiblaCompass from "./QiblaCompass";
 import FeaturesDrawer, { FeatureShowcaseGrid, FeatureModalHost, GlobalModuleHost } from "./FeaturesDrawer";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
+import { RamadanCountdownCard, ThemePreviewCard } from "./RamadanCountdown";
+import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
 import {
   getMonthTimesForLocation,
@@ -213,6 +215,14 @@ export default function PrayerDashboard() {
     setAlertDismissedFor(null);
   }, [next.key]);
   const showAlertPopup = nearingAdhan && alertDismissedFor !== next.key;
+
+  useEffect(() => {
+    setNextPrayer({
+      name: CARD_LABELS[next.key],
+      time: times[next.key],
+      minsLeft: Math.max(0, Math.ceil(remainingSecs / 60)),
+    });
+  }, [next.key, times, remainingSecs]);
 
   const updateGlobalOffset = (n: number) => {
     setGlobalOffset(n);
@@ -474,6 +484,12 @@ function ExtraSection({
 
   return (
     <section id="more" className="relative w-full px-3 py-8 sm:px-[3vw] sm:py-12 space-y-6 sm:space-y-10">
+      {/* Ramazan countdown */}
+      <RamadanCountdownCard />
+
+      {/* Theme preview */}
+      <ThemePreviewCard />
+
       {/* Busulla-Kibla card */}
       <div id="kibla" className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
         <div className="flex items-center justify-between mb-5">

@@ -450,14 +450,61 @@ export function StreaksModal({ onClose }: { onClose: () => void }) {
 
 /* -------------------------------------------------------------- mosque */
 
-const MOSQUES = [
-  { name: "Xhamia e Madhe – Prishtinë", lat: 42.6629, lon: 21.1655 },
-  { name: "Xhamia e Llapit – Prishtinë", lat: 42.6702, lon: 21.1671 },
-  { name: "Xhamia Bajrakli – Pejë", lat: 42.6593, lon: 20.2887 },
-  { name: "Xhamia e Sinan Pashës – Prizren", lat: 42.2139, lon: 20.7397 },
-  { name: "Xhamia e Plumbit – Shkodër", lat: 42.0668, lon: 19.5126 },
-  { name: "Xhamia Et'hem Bej – Tiranë", lat: 41.3283, lon: 19.8188 },
+type Mosque = { name: string; address: string; city: string; lat: number; lon: number };
+
+const MOSQUES: Mosque[] = [
+  {
+    name: "Xhamia e Madhe (Sulltan Mehmet Fatihu)",
+    address: "Rr. Luan Haradinaj, Prishtinë",
+    city: "Prishtinë",
+    lat: 42.6629,
+    lon: 21.1655,
+  },
+  {
+    name: "Xhamia e Çarshisë",
+    address: "Rr. Ilir Konushevci, Prishtinë",
+    city: "Prishtinë",
+    lat: 42.6641,
+    lon: 21.1668,
+  },
+  {
+    name: "Xhamia e Mesme",
+    address: "Lagjja e Boshnjakëve, Prishtinë",
+    city: "Prishtinë",
+    lat: 42.6607,
+    lon: 21.1631,
+  },
+  {
+    name: "Xhamia Medina",
+    address: "Rr. Nazmi Ademi, Fushë Kosovë",
+    city: "Fushë Kosovë",
+    lat: 42.6389,
+    lon: 21.0961,
+  },
+  {
+    name: "Xhamia e Halit Ibn Velidit",
+    address: "Rr. Adem Jashari, Fushë Kosovë",
+    city: "Fushë Kosovë",
+    lat: 42.6362,
+    lon: 21.0894,
+  },
+  {
+    name: "Xhamia Bajrakli",
+    address: "Sheshi i Xhamisë, Pejë",
+    city: "Pejë",
+    lat: 42.6593,
+    lon: 20.2887,
+  },
+  {
+    name: "Xhamia e Sinan Pashës",
+    address: "Shadërvan, Prizren",
+    city: "Prizren",
+    lat: 42.2139,
+    lon: 20.7397,
+  },
 ];
+
+const MOSQUE_CITIES = Array.from(new Set(MOSQUES.map((m) => m.city)));
 
 function haversine(aLat: number, aLon: number, bLat: number, bLon: number) {
   const R = 6371;
@@ -469,16 +516,24 @@ function haversine(aLat: number, aLon: number, bLat: number, bLon: number) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+function mapsUrl(m: Mosque, from: { lat: number; lon: number } | null) {
+  const dest = encodeURIComponent(`${m.name}, ${m.address}`);
+  return from
+    ? `https://www.google.com/maps/dir/?api=1&origin=${from.lat},${from.lon}&destination=${dest}`
+    : `https://www.google.com/maps/search/?api=1&query=${dest}`;
+}
+
 export function MosqueModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang();
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [err, setErr] = useState("");
+  const [cityFilter, setCityFilter] = useState<string>("");
 
   const locate = () => {
     if (!("geolocation" in navigator)) {
       setStatus("error");
-      setErr("Pajisja nuk mbështet gjeolokacionin.");
+      setErr("Pajisja nuk mbështet gjeolokacionin. Zgjidh qytetin manualisht.");
       return;
     }
     setStatus("loading");
@@ -489,34 +544,47 @@ export function MosqueModal({ onClose }: { onClose: () => void }) {
       },
       (e) => {
         setStatus("error");
-        setErr(e.message || "Leja e vendndodhjes u refuzua.");
+        setErr(e.message || "Leja e vendndodhjes u refuzua. Zgjidh qytetin manualisht.");
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 
   const list = useMemo(() => {
-    if (!coords) return MOSQUES.map((m) => ({ ...m, dist: null as number | null }));
-    return MOSQUES.map((m) => ({ ...m, dist: haversine(coords.lat, coords.lon, m.lat, m.lon) })).sort(
-      (a, b) => (a.dist ?? 0) - (b.dist ?? 0),
-    );
-  }, [coords]);
+    const base = cityFilter ? MOSQUES.filter((m) => m.city === cityFilter) : MOSQUES;
+    if (!coords) return base.map((m) => ({ ...m, dist: null as number | null }));
+    return base
+      .map((m) => ({ ...m, dist: haversine(coords.lat, coords.lon, m.lat, m.lon) }))
+      .sort((a, b) => a.dist - b.dist);
+  }, [coords, cityFilter]);
 
   return (
     <Modal title={t("mosque")} onClose={onClose}>
       <div className="space-y-4">
         <button
           onClick={locate}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.99]"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#00D9A3] px-4 py-3 text-sm font-bold text-[#0B1E24] transition hover:opacity-90 active:scale-[0.99]"
         >
           <Navigation className="size-4" />
-          {status === "loading" ? "Duke lokalizuar…" : "Gjej vendndodhjen tim"}
+          {status === "loading" ? "Duke lokalizuar…" : "Gjej vendndodhjen tim (GPS)"}
         </button>
 
         {status === "error" && (
-          <p className="rounded-2xl bg-[#F59E0B]/10 border border-[#F59E0B]/30 p-3 text-xs text-[#F59E0B]">
-            {err}
-          </p>
+          <div className="space-y-2 rounded-2xl border border-[#F59E0B]/30 bg-[#F59E0B]/10 p-3">
+            <p className="text-xs text-[#F59E0B]">{err}</p>
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="w-full rounded-xl border border-[#00D9A3]/25 bg-[#0B1E24] px-3 py-2 text-sm text-white focus:border-[#00D9A3] focus:outline-none"
+            >
+              <option value="">Të gjitha qytetet</option>
+              {MOSQUE_CITIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
         <div className="space-y-2">
@@ -524,33 +592,40 @@ export function MosqueModal({ onClose }: { onClose: () => void }) {
             <div
               key={m.name}
               className={[
-                "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-4",
-                i === 0 && coords ? "border-primary/40 bg-primary/10" : "border-border bg-background/60",
+                "rounded-2xl border p-4",
+                i === 0 && coords
+                  ? "border-[#00D9A3] bg-[#00D9A3]/10 shadow-[0_0_20px_rgba(0,217,165,0.2)]"
+                  : "border-[#00D9A3]/20 bg-[#18282E]",
               ].join(" ")}
             >
-              <div className="flex min-w-0 items-center gap-2">
-                <MapPin className="size-4 shrink-0 text-primary" />
-                <span className="truncate text-sm font-medium text-foreground">{m.name}</span>
+              <div className="flex items-start gap-2">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-[#00D9A3]" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold leading-snug text-white">{m.name}</div>
+                  <div className="mt-0.5 text-xs text-[#9CA3AF]">{m.address}</div>
+                </div>
+                {m.dist != null && (
+                  <span className="shrink-0 rounded-full border border-[#00D9A3]/40 bg-[#00D9A3]/10 px-2.5 py-1 text-[11px] font-bold tabular-nums text-[#00D9A3]">
+                    📍 {m.dist.toFixed(1)} km larg
+                  </span>
+                )}
               </div>
-              <span className="shrink-0 text-xs font-bold tabular-nums text-muted-foreground">
-                {m.dist == null ? "—" : `${m.dist.toFixed(1)} km`}
-              </span>
+              <a
+                href={mapsUrl(m, coords)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#00D9A3] px-3 py-2 text-xs font-bold text-[#0B1E24] transition hover:opacity-90"
+              >
+                <Navigation className="size-3.5" /> Hap në Google Maps / Merr Udhëzimet
+              </a>
             </div>
           ))}
         </div>
-
-        <a
-          href="https://www.google.com/maps/search/mosque+near+me"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20"
-        >
-          Hape në Google Maps
-        </a>
       </div>
     </Modal>
   );
 }
+
 
 /* ------------------------------------------------------------ language */
 

@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as KalendariRamazanitRouteImport } from './routes/kalendari-ramazanit'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicBikTodayRouteImport } from './routes/api/public/bik-today'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KalendariRamazanitRoute = KalendariRamazanitRouteImport.update({
+  id: '/kalendari-ramazanit',
+  path: '/kalendari-ramazanit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,43 @@ const ApiPublicBikTodayRoute = ApiPublicBikTodayRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/kalendari-ramazanit': typeof KalendariRamazanitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/bik-today': typeof ApiPublicBikTodayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/kalendari-ramazanit': typeof KalendariRamazanitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/bik-today': typeof ApiPublicBikTodayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/kalendari-ramazanit': typeof KalendariRamazanitRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/public/bik-today': typeof ApiPublicBikTodayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sitemap.xml' | '/api/public/bik-today'
+  fullPaths:
+    | '/'
+    | '/kalendari-ramazanit'
+    | '/sitemap.xml'
+    | '/api/public/bik-today'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sitemap.xml' | '/api/public/bik-today'
-  id: '__root__' | '/' | '/sitemap.xml' | '/api/public/bik-today'
+  to: '/' | '/kalendari-ramazanit' | '/sitemap.xml' | '/api/public/bik-today'
+  id:
+    | '__root__'
+    | '/'
+    | '/kalendari-ramazanit'
+    | '/sitemap.xml'
+    | '/api/public/bik-today'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  KalendariRamazanitRoute: typeof KalendariRamazanitRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicBikTodayRoute: typeof ApiPublicBikTodayRoute
 }
@@ -66,6 +85,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kalendari-ramazanit': {
+      id: '/kalendari-ramazanit'
+      path: '/kalendari-ramazanit'
+      fullPath: '/kalendari-ramazanit'
+      preLoaderRoute: typeof KalendariRamazanitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +113,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  KalendariRamazanitRoute: KalendariRamazanitRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicBikTodayRoute: ApiPublicBikTodayRoute,
 }

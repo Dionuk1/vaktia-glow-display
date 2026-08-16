@@ -496,9 +496,9 @@ function ExtraSection({
       {/* Busulla-Kibla card */}
       <div id="kibla" className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">
         <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          <h2 className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
             <Compass className="size-4" /> Busulla-Kibla
-          </div>
+          </h2>
           <div className="text-xs text-muted-foreground">
             {getCityLabel(region, city)} · CET
           </div>
@@ -508,9 +508,9 @@ function ExtraSection({
 
       {/* Dhikr / Tasbih counter */}
       <div id="dhikr">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
+        <h2 className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
           <Hand className="size-4" /> Tesbihu pas namazit
-        </div>
+        </h2>
         <TasbihCounter />
       </div>
 
@@ -520,9 +520,9 @@ function ExtraSection({
       </div>
       {/* Features showcase */}
       <div id="features">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
+        <h2 className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground mb-3 px-1">
           <Sparkles className="size-4" /> Veçoritë e VaktiaKS
-        </div>
+        </h2>
         <FeatureShowcaseGrid onOpen={setFeatureModal} />
       </div>
       <FeatureModalHost open={featureModal} onClose={() => setFeatureModal(null)} />
@@ -532,9 +532,9 @@ function ExtraSection({
       <div id="kalendari" className="rounded-3xl bg-surface/60 backdrop-blur card-glow overflow-hidden">
         <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-border">
           <div>
-            <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <h2 className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               Orari mujor
-            </div>
+            </h2>
             <div className="text-lg sm:text-xl font-semibold mt-1">
               {MONTH_NAMES_SQ[month]} {year} · {getCityLabel(region, city)}
             </div>
@@ -762,11 +762,12 @@ function SettingsModal({
 
         {/* Dynamic city dropdown */}
         <div className="mb-5">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+          <label htmlFor="city-select" className="block text-xs uppercase tracking-widest text-muted-foreground mb-2">
             Qyteti
-          </div>
+          </label>
           {region === "Kosove" ? (
             <select
+              id="city-select"
               value={city}
               onChange={(e) => onCityChange(e.target.value as CityKey)}
               className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"
@@ -777,6 +778,7 @@ function SettingsModal({
             </select>
           ) : (
             <select
+              id="city-select"
               value={alCity}
               onChange={(e) => onAlCityChange(e.target.value as AlbaniaCityKey)}
               className="w-full rounded-xl bg-surface px-4 py-3 font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary"

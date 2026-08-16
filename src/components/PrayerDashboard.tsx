@@ -259,6 +259,9 @@ export default function PrayerDashboard() {
       />
 
       <div className="relative flex h-full w-full flex-col gap-3 p-3 sm:gap-[2vh] sm:p-[2vh]">
+        <h1 className="sr-only">
+          VaktiaKS — Kohët e namazit dhe faljes për Kosovë dhe Shqipëri
+        </h1>
         {/* HEADER */}
         <header className="flex flex-col gap-3 rounded-3xl bg-surface/60 backdrop-blur card-glow p-4 sm:flex-row sm:items-center sm:justify-between sm:px-[3vw] sm:py-[2vh]">
           {/* Clock */}

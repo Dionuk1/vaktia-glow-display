@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import logo from "@/assets/vaktiaks-logo.png.asset.json";
 
 export function BrandLogo({
@@ -74,7 +75,15 @@ export default function SiteHeader({ menu }: { menu?: React.ReactNode }) {
               <span className="absolute inset-x-3 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-primary transition-transform duration-300 group-hover:scale-x-100" />
             </motion.button>
           ))}
+          <Link
+            to="/kalendari-ramazanit"
+            className="group relative rounded-full px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary transition hover:text-primary"
+          >
+            Ramazani
+            <span className="absolute inset-x-3 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-primary transition-transform duration-300 group-hover:scale-x-100" />
+          </Link>
         </nav>
+
 
         <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">{menu}</div>
       </div>

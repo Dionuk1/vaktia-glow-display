@@ -11,6 +11,7 @@ import SiteFooter from "./SiteFooter";
 import { RamadanCountdownCard, ThemePreviewCard } from "./RamadanCountdown";
 import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
+import { onOpenModule } from "@/lib/modules";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,

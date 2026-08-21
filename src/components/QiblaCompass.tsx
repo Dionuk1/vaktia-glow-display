@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const QIBLA = 137; // Qibla angle for Kosovo
 
 type DeviceOrientationEventiOS = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<"granted" | "denied">;
@@ -31,7 +30,8 @@ type CompassStatus =
   | "active"            // receiving orientation data
   | "unsupported";      // truly no sensor after grace period
 
-export default function QiblaCompass() {
+export default function QiblaCompass({ qibla = 138, cityLabel }: { qibla?: number; cityLabel?: string } = {}) {
+  const QIBLA = qibla;
   const [heading, setHeading] = useState<number | null>(null);
   const [platform, setPlatform] = useState<Platform>("ios");
   const [status, setStatus] = useState<CompassStatus>("checking");
@@ -303,7 +303,7 @@ export default function QiblaCompass() {
 
       <div className="mt-4 flex items-center gap-3 text-sm">
         <div className="rounded-full bg-surface-elevated px-3 py-1 border border-border tabular-nums">
-          Cak: <span className="text-primary font-semibold">137°</span>
+          🔄 Cak: <span className="text-primary font-semibold">{QIBLA.toFixed(1)}°</span>
         </div>
         {heading !== null ? (
           <div
@@ -313,7 +313,7 @@ export default function QiblaCompass() {
                 : "bg-surface-elevated border-border"
             }`}
           >
-            Drejtimi: <span className="font-semibold">{Math.round(heading)}°</span>
+            Drejtimi i Busullës: <span className="font-semibold">{Math.round(heading)}°</span>
           </div>
         ) : (
           <div className="rounded-full bg-surface-elevated px-3 py-1 border border-border text-muted-foreground">
@@ -352,7 +352,7 @@ export default function QiblaCompass() {
 
       <p className="mt-3 text-xs text-muted-foreground text-center max-w-xs">
         {status === "unsupported"
-          ? "Pajisja juaj nuk e mbështet busullën — shenja e gjelbër tregon 137° si referencë fikse."
+          ? `Pajisja juaj nuk e mbështet busullën — shenja e gjelbër tregon ${QIBLA}° si referencë fikse.`
           : status === "needs-permission"
             ? "Në iPhone/iPad duhet leja juaj për të përdorur sensorin. Prekni butonin lart për ta aktivizuar."
             : status === "checking"
@@ -360,7 +360,7 @@ export default function QiblaCompass() {
               : platform === "android"
                 ? "Android: mbani telefonin horizontalisht dhe kalibrojeni duke e tundur në formë '8'. Pastaj rrotullohuni derisa shigjeta të përputhet me shenjën e gjelbër."
                 : "Mbani telefonin drejt dhe rrotullohuni derisa shigjeta lart të përputhet me shenjën e gjelbër."}
-        {" "}Drejtimi nga Kosova drejt Qabesë: <span className="text-primary font-semibold">137° (jug-juglindje)</span>.
+        {" "}Drejtimi {cityLabel ? `nga ${cityLabel}` : ""} drejt Qabesë:{" "}<span className="text-primary font-semibold">{QIBLA.toFixed(1)}° (jug-juglindje)</span>.
       </p>
     </div>
   );

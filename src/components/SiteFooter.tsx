@@ -7,7 +7,7 @@ const TOOLS: { label: string; module: string }[] = [
   { label: "Kalendari i Ramazanit & Countdown", module: "ramadan" },
   { label: "Gjurmuesi i Kazave", module: "kaza" },
   { label: "Analitika e Tespihut", module: "analytics" },
-  { label: "Busulla e Kibles", module: "" },
+  { label: "Busulla e Kibles", module: "qibla" },
   { label: "Xhamia më e Afërt", module: "mosque" },
   { label: "Si të falet namazi", module: "guide" },
 ];

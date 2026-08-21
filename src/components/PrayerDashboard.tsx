@@ -3,12 +3,15 @@ import { Settings, MapPin, RefreshCw, Check, AlertCircle, ChevronDown, Compass, 
 import TasbihCounter from "./TasbihCounter";
 import VoluntaryDhikr from "./VoluntaryDhikr";
 import QiblaCompass from "./QiblaCompass";
+import QiblaModal from "./QiblaModal";
+import IslamicHolidays, { HolidayCountdownBadges } from "./IslamicHolidays";
 import FeaturesDrawer, { FeatureShowcaseGrid, FeatureModalHost, GlobalModuleHost } from "./FeaturesDrawer";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import { RamadanCountdownCard, ThemePreviewCard } from "./RamadanCountdown";
 import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
+import { onOpenModule } from "@/lib/modules";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,
@@ -49,7 +52,10 @@ const PRAYER_ICONS: Record<keyof DayTimes, typeof Sun> = {
 };
 
 
-const REGION_KEY = "vaktia-region-v1";
+const REGION_KEY = "vaktiaks_selected_region";
+const LEGACY_REGION_KEY = "vaktia-region-v1";
+
+export const QIBLA_BY_REGION: Record<RegionKey, number> = { Kosove: 138, Shqiperi: 136 };
 const CITY_KEY = "vaktia-city-v1";
 const AL_CITY_KEY = "vaktia-al-city-v1";
 
@@ -139,7 +145,7 @@ export default function PrayerDashboard() {
     setOffsets(loadOffsets());
     setRemoteMeta(getRemoteMeta());
     try {
-      const r = localStorage.getItem(REGION_KEY) as RegionKey | null;
+      const r = (localStorage.getItem(REGION_KEY) ?? localStorage.getItem(LEGACY_REGION_KEY)) as RegionKey | null;
       if (r === "Kosove" || r === "Shqiperi") setRegion(r);
       const c = localStorage.getItem(CITY_KEY) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
@@ -224,6 +230,27 @@ export default function PrayerDashboard() {
     });
   }, [next.key, times, remainingSecs]);
 
+  const changeRegion = (r: RegionKey) => {
+    setRegion(r);
+    try { localStorage.setItem(REGION_KEY, r); } catch {}
+  };
+
+  const daylightMins = Math.max(0, toMin(times.akshami) - toMin(times.lindja));
+
+  const prevPrayerMin = useMemo(() => {
+    let prev: number | null = null;
+    for (const k of CARD_KEYS) {
+      const t = toMin(times[k]);
+      if (t <= nowMin) prev = t;
+    }
+    return prev ?? toMin(times.jacia) - 24 * 60;
+  }, [times, nowMin]);
+
+  const progressPct = Math.min(
+    100,
+    Math.max(0, ((nowMin - prevPrayerMin) / Math.max(1, next.minutes - prevPrayerMin)) * 100),
+  );
+
   const updateGlobalOffset = (n: number) => {
     setGlobalOffset(n);
     try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
@@ -283,6 +310,29 @@ export default function PrayerDashboard() {
                 {getCityLabel(region, activeCity)}, {region === "Shqiperi" ? "Shqipëri 🇦🇱" : "Kosovë 🇽🇰"}
               </span>
             </button>
+            <div className="inline-flex rounded-full border border-[#00D9A3]/20 bg-[#18282E] p-1">
+              {([
+                ["Kosove", "Kosovë · BIK"],
+                ["Shqiperi", "Shqipëri · KMSH"],
+              ] as [RegionKey, string][]).map(([key, label]) => {
+                const active = region === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => changeRegion(key)}
+                    aria-pressed={active}
+                    className={[
+                      "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] transition",
+                      active
+                        ? "bg-[#00D9A3]/15 text-[#00D9A3] shadow-[0_0_20px_rgba(0,217,165,0.2)]"
+                        : "text-[#9CA3AF] hover:text-white",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}
             </div>
@@ -392,6 +442,34 @@ export default function PrayerDashboard() {
           })}
         </main>
 
+        {/* Daylight + progress */}
+        <div className="grid gap-3 rounded-3xl border border-[#00D9A3]/20 bg-[#18282E] p-4 shadow-[0_0_20px_rgba(0,217,165,0.2)] sm:grid-cols-2 sm:items-center sm:p-5">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#9CA3AF]">
+              Gjatësia e Ditës
+            </div>
+            <div className="mt-1 text-base font-semibold text-white sm:text-lg">
+              ☀️ Gjatësia e ditës sot: {Math.floor(daylightMins / 60)} orë e {daylightMins % 60} min
+            </div>
+            <div className="mt-1 text-xs text-[#9CA3AF]">
+              Lindja {times.lindja} → Akshami {times.akshami}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
+              <span>Deri në {CARD_LABELS[next.key]}</span>
+              <span className="font-bold tabular-nums text-[#00D9A3]">
+                {Math.round(progressPct)}%
+              </span>
+            </div>
+            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-[#0B1E24]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#00D9A3] to-[#B6FF2E] transition-[width] duration-1000"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
       </div>
 
@@ -476,6 +554,11 @@ function ExtraSection({
   const today = now.getDate();
   const isAlbania = region === "Shqiperi";
   const [featureModal, setFeatureModal] = useState<Parameters<typeof FeatureModalHost>[0]["open"]>(null);
+  const [qiblaOpen, setQiblaOpen] = useState(false);
+  const [calTab, setCalTab] = useState<"orari" | "festat">("orari");
+  const qibla = QIBLA_BY_REGION[region];
+
+  useEffect(() => onOpenModule((id) => id === "qibla" && setQiblaOpen(true)), []);
 
   const rows = useMemo(
     () => getMonthTimesForLocation(year, month, region, city).map((r) => ({
@@ -487,8 +570,9 @@ function ExtraSection({
 
   return (
     <section id="more" className="relative w-full px-3 py-8 sm:px-[3vw] sm:py-12 space-y-6 sm:space-y-10">
-      {/* Ramazan countdown */}
+      {/* Ramazan countdown + holiday badges */}
       <RamadanCountdownCard />
+      <HolidayCountdownBadges />
 
       {/* Theme preview */}
       <ThemePreviewCard />
@@ -499,12 +583,22 @@ function ExtraSection({
           <h2 className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
             <Compass className="size-4" /> Busulla-Kibla
           </h2>
-          <div className="text-xs text-muted-foreground">
-            {getCityLabel(region, city)} · CET
-          </div>
+          <button
+            onClick={() => setQiblaOpen(true)}
+            className="rounded-full border border-[#00D9A3]/40 bg-[#00D9A3]/10 px-3 py-1.5 text-xs font-semibold text-[#00D9A3] transition hover:bg-[#00D9A3]/20"
+          >
+            Aktivizo Kiblën 🧭
+          </button>
         </div>
-        <QiblaCompass />
+        <QiblaCompass qibla={qibla} cityLabel={getCityLabel(region, city)} />
       </div>
+      {qiblaOpen && (
+        <QiblaModal
+          cityLabel={getCityLabel(region, city)}
+          qibla={qibla}
+          onClose={() => setQiblaOpen(false)}
+        />
+      )}
 
       {/* Dhikr / Tasbih counter */}
       <div id="dhikr">
@@ -536,10 +630,32 @@ function ExtraSection({
               Orari mujor
             </h2>
             <div className="text-lg sm:text-xl font-semibold mt-1">
-              {MONTH_NAMES_SQ[month]} {year} · {getCityLabel(region, city)}
+              {calTab === "orari"
+                ? `${MONTH_NAMES_SQ[month]} ${year} · ${getCityLabel(region, city)}`
+                : "Festat Islame 2026"}
             </div>
           </div>
+          <div className="inline-flex shrink-0 rounded-full border border-[#00D9A3]/20 bg-[#0B1E24] p-1">
+            {([
+              ["orari", "Orari mujor"],
+              ["festat", "Festat Islame 2026"],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setCalTab(id)}
+                className={[
+                  "rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition",
+                  calTab === id
+                    ? "bg-[#00D9A3]/15 text-[#00D9A3]"
+                    : "text-[#9CA3AF] hover:text-white",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
+        {calTab === "festat" ? <IslamicHolidays /> : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm sm:text-base">
             <thead className="text-xs uppercase tracking-wider text-muted-foreground bg-surface/40">
@@ -580,6 +696,7 @@ function ExtraSection({
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Global offset widget — Kosovë only (Shqipëri ka tabela të plota për qytet) */}

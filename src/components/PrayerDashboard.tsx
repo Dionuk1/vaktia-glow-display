@@ -166,6 +166,7 @@ export default function PrayerDashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
   const [remoteMeta, setRemoteMeta] = useState<RemoteMeta | null>(null);
+  const [detecting, setDetecting] = useState(false);
 
   const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
 
@@ -174,14 +175,17 @@ export default function PrayerDashboard() {
     setOffsets(loadOffsets());
     setRemoteMeta(getRemoteMeta());
     try {
-      const r = (localStorage.getItem(REGION_KEY) ?? localStorage.getItem(LEGACY_REGION_KEY)) as RegionKey | null;
+      const saved = loadActiveLocation();
+      const r = (saved?.region ??
+        localStorage.getItem(REGION_KEY) ??
+        localStorage.getItem(LEGACY_REGION_KEY)) as RegionKey | null;
       if (r === "Kosove" || r === "Shqiperi") setRegion(r);
-      const c = localStorage.getItem(CITY_KEY) as CityKey | null;
+      const c = (saved?.city ?? localStorage.getItem(CITY_KEY)) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
-      const ac = localStorage.getItem(AL_CITY_KEY) as AlbaniaCityKey | null;
+      const ac = (saved?.alCity ?? localStorage.getItem(AL_CITY_KEY)) as AlbaniaCityKey | null;
       if (ac && (ALBANIA_CITIES as readonly string[]).includes(ac)) setAlCity(ac);
-      const g = localStorage.getItem(GLOBAL_OFFSET_KEY);
-      if (g !== null) setGlobalOffset(Number(g) || 0);
+      const g = saved?.globalOffset ?? localStorage.getItem(GLOBAL_OFFSET_KEY);
+      if (g !== null && g !== undefined) setGlobalOffset(Number(g) || 0);
     } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);

@@ -12,6 +12,7 @@ import { RamadanCountdownCard, ThemePreviewCard } from "./RamadanCountdown";
 import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
 import { onOpenModule } from "@/lib/modules";
+import { SyncOraretButton, LocationQuickSwitch } from "./LocationSync";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,
@@ -21,9 +22,10 @@ import {
   CITY_LABELS,
   ALBANIA_CITIES,
   ALBANIA_CITY_LABELS,
-  
   getCityLabel,
+  getCouncilLabel,
   getRegionLabel,
+  resolveLocationFromCoords,
   fetchLatestFromBIK,
   fetchLiveTodayFromBislame,
   getRemoteMeta,

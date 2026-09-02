@@ -263,9 +263,62 @@ export default function PrayerDashboard() {
     });
   }, [next.key, times, remainingSecs]);
 
+  const persist = (next: Partial<ActiveLocation>) => {
+    saveActiveLocation({ region, city, alCity, globalOffset, ...next });
+  };
+
   const changeRegion = (r: RegionKey) => {
     setRegion(r);
-    try { localStorage.setItem(REGION_KEY, r); } catch {}
+    persist({ region: r });
+  };
+
+  const changeCity = (c: CityKey) => {
+    setCity(c);
+    persist({ city: c });
+  };
+
+  const changeAlCity = (c: AlbaniaCityKey) => {
+    setAlCity(c);
+    persist({ alCity: c });
+  };
+
+  // Sinkronizim manual: rimerr oraret zyrtare BIK/KMSH sipas këshillit aktiv
+  const syncNow = async () => {
+    if (region === "Kosove") {
+      await fetchLiveTodayFromBislame().catch(() => {});
+      try {
+        const meta = await fetchLatestFromBIK();
+        setRemoteMeta(meta);
+      } catch {}
+    }
+    setDataVersion((v) => v + 1);
+    setNow(new Date());
+  };
+
+  // Zbulim automatik i vendndodhjes -> këshilli zyrtar më i afërt
+  const autoDetect = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { region: r, city: c } = resolveLocationFromCoords(
+          pos.coords.latitude,
+          pos.coords.longitude,
+        );
+        setRegion(r);
+        if (r === "Shqiperi") {
+          setAlCity(c as AlbaniaCityKey);
+          saveActiveLocation({ region: r, city, alCity: c as AlbaniaCityKey, globalOffset });
+        } else {
+          setCity(c as CityKey);
+          saveActiveLocation({ region: r, city: c as CityKey, alCity, globalOffset });
+        }
+        setDataVersion((v) => v + 1);
+        setDetecting(false);
+      },
+      () => setDetecting(false),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
   };
 
   const daylightMins = Math.max(0, toMin(times.akshami) - toMin(times.lindja));

@@ -1,43 +1,124 @@
 // =============================================================================
 // KMSH (Komuniteti Mysliman i Shqipërisë) — Takvimi 2026
-// Shqipëri · qytetet bregdetare për pushimet verore
+// Këshillat e Myftinive + qytetet bregdetare të pushimeve
 //
 // Burimi zyrtar: https://kmsh.al/takvimi/
 //
-// ⚠️  PASTE-HERE BLOCK ⚠️
-// Më poshtë janë vetëm vlera DEMO/placeholder për Qershor–Korrik 2026.
-// Për të vendosur kalendarin e plotë zyrtar 2026 të KMSH, zëvendëso
-// objektet brenda `KMSH_2026[city]` me të gjitha 365 ditët. Çelësi është
-// `MM-DD` dhe vlerat janë në formatin 24h `HH:MM`. Strukturë:
-//
-//   "06-15": { imsaku, sabahu, lindja, dreka, ikindia, akshami, jacia }
-//
-// Funksioni `getAlbanianTimesForDate` zgjedh ditën më të afërt nëse data
-// nuk gjendet, kështu që mund ta plotësosh në mënyrë inkrementale.
+// Struktura: çdo qytet i zgjedhur mapohet 100% në Këshillin (Myftininë) zyrtare.
+//   Shëngjin  -> Këshilli i Lezhës
+//   Velipojë  -> Këshilli i Shkodrës
+// Oraret bazë (seed) janë të Shkodrës; çdo Këshill përdorin korrigjim minutash
+// sipas gjatësisë gjeografike derisa të vendosen tabelat e plota zyrtare.
 // =============================================================================
 
 import type { DayTimes } from "./prayer-data";
 
-export const ALBANIA_CITIES = [
+// ---------- Këshillat zyrtare të KMSH ----------
+
+export const ALBANIA_COUNCILS = [
+  "Tirane",
   "Shkoder",
-  "Shengjin",
   "Lezhe",
-  "Velipoje",
   "Durres",
+  "Elbasan",
+  "Korce",
+  "Vlore",
+  "Fier",
+  "Gjirokaster",
+  "Kukes",
+  "Berat",
+  "Diber",
+] as const;
+
+export type AlbaniaCouncilKey = (typeof ALBANIA_COUNCILS)[number];
+
+export const ALBANIA_COUNCIL_LABELS: Record<AlbaniaCouncilKey, string> = {
+  Tirane: "Tiranë",
+  Shkoder: "Shkodër",
+  Lezhe: "Lezhë",
+  Durres: "Durrës",
+  Elbasan: "Elbasan",
+  Korce: "Korçë",
+  Vlore: "Vlorë",
+  Fier: "Fier",
+  Gjirokaster: "Gjirokastër",
+  Kukes: "Kukës",
+  Berat: "Berat",
+  Diber: "Dibër",
+};
+
+// Qytetet/vendet e zgjedhshme (përfshin bregdetin e pushimeve)
+export const ALBANIA_CITIES = [
+  "Tirane",
+  "Shkoder",
+  "Velipoje",
+  "Lezhe",
+  "Shengjin",
+  "Durres",
+  "Elbasan",
+  "Korce",
+  "Vlore",
+  "Fier",
+  "Gjirokaster",
+  "Kukes",
+  "Berat",
+  "Diber",
 ] as const;
 
 export type AlbaniaCityKey = (typeof ALBANIA_CITIES)[number];
 
 export const ALBANIA_CITY_LABELS: Record<AlbaniaCityKey, string> = {
-  Shkoder: "Shkodër",
-  Shengjin: "Shëngjin",
-  Lezhe: "Lezhë",
+  ...ALBANIA_COUNCIL_LABELS,
   Velipoje: "Velipojë",
-  Durres: "Durrës",
+  Shengjin: "Shëngjin",
+};
+
+// Mapim 100% i saktë: qytet -> Këshilli i Myftinisë
+export const CITY_TO_COUNCIL: Record<AlbaniaCityKey, AlbaniaCouncilKey> = {
+  Tirane: "Tirane",
+  Shkoder: "Shkoder",
+  Velipoje: "Shkoder",
+  Lezhe: "Lezhe",
+  Shengjin: "Lezhe",
+  Durres: "Durres",
+  Elbasan: "Elbasan",
+  Korce: "Korce",
+  Vlore: "Vlore",
+  Fier: "Fier",
+  Gjirokaster: "Gjirokaster",
+  Kukes: "Kukes",
+  Berat: "Berat",
+  Diber: "Diber",
+};
+
+export function getCouncilForCity(city: AlbaniaCityKey): AlbaniaCouncilKey {
+  return CITY_TO_COUNCIL[city] ?? "Tirane";
+}
+
+export function getCouncilLabelForCity(city: AlbaniaCityKey): string {
+  return ALBANIA_COUNCIL_LABELS[getCouncilForCity(city)];
+}
+
+// Koordinatat e qyteteve (për zbulim automatik të vendndodhjes)
+export const ALBANIA_CITY_COORDS: Record<AlbaniaCityKey, { lat: number; lon: number }> = {
+  Tirane: { lat: 41.3275, lon: 19.8187 },
+  Shkoder: { lat: 42.0693, lon: 19.5033 },
+  Velipoje: { lat: 41.8697, lon: 19.4181 },
+  Lezhe: { lat: 41.7836, lon: 19.6436 },
+  Shengjin: { lat: 41.8153, lon: 19.5936 },
+  Durres: { lat: 41.3231, lon: 19.4414 },
+  Elbasan: { lat: 41.1125, lon: 20.0822 },
+  Korce: { lat: 40.6186, lon: 20.7808 },
+  Vlore: { lat: 40.4667, lon: 19.4897 },
+  Fier: { lat: 40.7239, lon: 19.5567 },
+  Gjirokaster: { lat: 40.0758, lon: 20.1389 },
+  Kukes: { lat: 42.0769, lon: 20.4219 },
+  Berat: { lat: 40.7058, lon: 19.9522 },
+  Diber: { lat: 41.6853, lon: 20.4292 },
 };
 
 // -----------------------------------------------------------------------------
-// SEED — Qershor / Korrik 2026 (placeholder, vlera përafërsisht KMSH, DST CEST)
+// SEED — Qershor / Korrik 2026 (Shkodër, DST CEST)
 // Zëvendëso me kalendarin e plotë zyrtar kur ta kesh në dorë.
 // -----------------------------------------------------------------------------
 
@@ -51,27 +132,28 @@ const SHKODER_SEED: DayMap = {
   "07-31": { imsaku: "03:21", sabahu: "03:51", lindja: "05:28", dreka: "12:48", ikindia: "16:38", akshami: "20:06", jacia: "21:42" },
 };
 
-// Per-city minute offsets relative to Shkodër (placeholder approximations).
-// Replace by full per-city tables once you have the official KMSH numbers.
-const CITY_MINUTE_OFFSETS: Record<AlbaniaCityKey, number> = {
-  Shkoder: 0,
-  Shengjin: 0,
-  Lezhe: 0,
-  Velipoje: 0,
-  Durres: 1,
-};
+const REF_LON = ALBANIA_CITY_COORDS.Shkoder.lon;
+
+// Korrigjim minutash sipas gjatësisë gjeografike (4 min / gradë), relativ me Shkodrën.
+export const COUNCIL_MINUTE_OFFSETS: Record<AlbaniaCouncilKey, number> = ALBANIA_COUNCILS.reduce(
+  (acc, c) => {
+    acc[c] = Math.round((REF_LON - ALBANIA_CITY_COORDS[c].lon) * 4);
+    return acc;
+  },
+  {} as Record<AlbaniaCouncilKey, number>,
+);
+
+export const KMSH_2026: Record<AlbaniaCouncilKey, DayMap> = ALBANIA_COUNCILS.reduce(
+  (acc, c) => {
+    acc[c] = SHKODER_SEED;
+    return acc;
+  },
+  {} as Record<AlbaniaCouncilKey, DayMap>,
+);
 
 // -----------------------------------------------------------------------------
-// Public API
+// Helpers
 // -----------------------------------------------------------------------------
-
-export const KMSH_2026: Record<AlbaniaCityKey, DayMap> = {
-  Shkoder: SHKODER_SEED,
-  Shengjin: SHKODER_SEED,
-  Lezhe: SHKODER_SEED,
-  Velipoje: SHKODER_SEED,
-  Durres: SHKODER_SEED,
-};
 
 function toMin(t: string) {
   const [h, m] = t.split(":").map(Number);
@@ -92,27 +174,25 @@ function findClosestKey(map: DayMap, target: string): string | null {
   if (keys.length === 0) return null;
   let best = keys[0];
   let bestDelta = Infinity;
+  const [m2, d2] = target.split("-").map(Number);
   for (const k of keys) {
-    const delta = Math.abs(k.localeCompare(target));
-    // localeCompare gives -1/0/1; fall back to numeric month-day distance
     const [m1, d1] = k.split("-").map(Number);
-    const [m2, d2] = target.split("-").map(Number);
     const dist = Math.abs((m1 * 31 + d1) - (m2 * 31 + d2));
     if (dist < bestDelta) {
       best = k;
       bestDelta = dist;
     }
-    void delta;
   }
   return best;
 }
 
 export function getAlbanianTimesForDate(date: Date, city: AlbaniaCityKey): DayTimes {
-  const map = KMSH_2026[city];
+  const council = getCouncilForCity(city);
+  const map = KMSH_2026[council] ?? SHKODER_SEED;
   const key = dateKey(date);
   const useKey = map[key] ? key : findClosestKey(map, key);
   const base = useKey ? map[useKey] : SHKODER_SEED["06-15"];
-  const offset = CITY_MINUTE_OFFSETS[city] ?? 0;
+  const offset = COUNCIL_MINUTE_OFFSETS[council] ?? 0;
   if (offset === 0) return { ...base };
   const out = {} as DayTimes;
   (Object.keys(base) as (keyof DayTimes)[]).forEach((k) => {
@@ -129,4 +209,26 @@ export function getAlbanianMonthTimes(year: number, month: number, city: Albania
     out.push({ date, times: getAlbanianTimesForDate(date, city) });
   }
   return out;
+}
+
+// Zbulim automatik: koordinata -> qyteti/këshilli më i afërt
+export function nearestAlbanianCity(lat: number, lon: number): AlbaniaCityKey {
+  let best: AlbaniaCityKey = "Tirane";
+  let bestD = Infinity;
+  for (const c of ALBANIA_CITIES) {
+    const { lat: a, lon: b } = ALBANIA_CITY_COORDS[c];
+    const dx = (b - lon) * Math.cos(((a + lat) / 2) * (Math.PI / 180));
+    const dy = a - lat;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) {
+      bestD = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+// Kufijtë e përafërt të Shqipërisë (për të vendosur nëse jemi në AL apo XK)
+export function isInsideAlbania(lat: number, lon: number): boolean {
+  return lat >= 39.6 && lat <= 42.7 && lon >= 19.0 && lon <= 21.06;
 }

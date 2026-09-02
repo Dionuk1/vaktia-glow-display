@@ -159,9 +159,16 @@ export const CARD_LABELS: Record<string, string> = {
 import {
   ALBANIA_CITIES,
   ALBANIA_CITY_LABELS,
+  ALBANIA_COUNCILS,
+  ALBANIA_COUNCIL_LABELS,
   getAlbanianTimesForDate,
   getAlbanianMonthTimes,
+  getCouncilForCity,
+  getCouncilLabelForCity,
+  nearestAlbanianCity,
+  isInsideAlbania,
   type AlbaniaCityKey,
+  type AlbaniaCouncilKey,
 } from "./albania-times";
 
 export type RegionKey = "Kosove" | "Shqiperi";
@@ -180,6 +187,12 @@ export type AnyCityKey = CityKey | AlbaniaCityKey;
 
 export function getCityLabel(region: RegionKey, city: AnyCityKey): string {
   if (region === "Shqiperi") return ALBANIA_CITY_LABELS[city as AlbaniaCityKey] ?? String(city);
+  return CITY_LABELS[city as CityKey] ?? String(city);
+}
+
+/** Emri i Këshillit (Myftinisë) / qytetit referues për oraret aktive. */
+export function getCouncilLabel(region: RegionKey, city: AnyCityKey): string {
+  if (region === "Shqiperi") return getCouncilLabelForCity(city as AlbaniaCityKey);
   return CITY_LABELS[city as CityKey] ?? String(city);
 }
 
@@ -210,8 +223,61 @@ export function getMonthTimesForLocation(
   return getMonthTimes(year, month, city as CityKey);
 }
 
-export { ALBANIA_CITIES, ALBANIA_CITY_LABELS };
-export type { AlbaniaCityKey };
+// ---------- Koordinatat e Kosovës + zbulim automatik i vendndodhjes ----------
+
+export const KOSOVO_CITY_COORDS: Record<CityKey, { lat: number; lon: number }> = {
+  Decan: { lat: 42.5406, lon: 20.2889 },
+  Gjakova: { lat: 42.3803, lon: 20.4308 },
+  Peja: { lat: 42.6593, lon: 20.2887 },
+  Prizreni: { lat: 42.2139, lon: 20.7397 },
+  Mitrovica: { lat: 42.8914, lon: 20.8660 },
+  Sharri: { lat: 42.0692, lon: 20.7247 },
+  Ferizaj: { lat: 42.3703, lon: 21.1553 },
+  Gjilan: { lat: 42.4635, lon: 21.4694 },
+  Prishtina: { lat: 42.6629, lon: 21.1655 },
+  Podujeva: { lat: 42.9106, lon: 21.1936 },
+  Vushtrri: { lat: 42.8231, lon: 20.9675 },
+  Presheva: { lat: 42.3089, lon: 21.6497 },
+};
+
+export function nearestKosovoCity(lat: number, lon: number): CityKey {
+  let best: CityKey = "Prishtina";
+  let bestD = Infinity;
+  for (const c of Object.keys(KOSOVO_CITY_COORDS) as CityKey[]) {
+    const { lat: a, lon: b } = KOSOVO_CITY_COORDS[c];
+    const dx = (b - lon) * Math.cos(((a + lat) / 2) * (Math.PI / 180));
+    const dy = a - lat;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) {
+      bestD = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/** Kthen regjionin + qytetin/këshillin zyrtar më të afërt për koordinatat e dhëna. */
+export function resolveLocationFromCoords(
+  lat: number,
+  lon: number,
+): { region: RegionKey; city: AnyCityKey } {
+  if (isInsideAlbania(lat, lon)) {
+    return { region: "Shqiperi", city: nearestAlbanianCity(lat, lon) };
+  }
+  return { region: "Kosove", city: nearestKosovoCity(lat, lon) };
+}
+
+export {
+  ALBANIA_CITIES,
+  ALBANIA_CITY_LABELS,
+  ALBANIA_COUNCILS,
+  ALBANIA_COUNCIL_LABELS,
+  getCouncilForCity,
+  getCouncilLabelForCity,
+  nearestAlbanianCity,
+  isInsideAlbania,
+};
+export type { AlbaniaCityKey, AlbaniaCouncilKey };
 
 // ---------- Remote sync from BIK GitHub mirror ----------
 

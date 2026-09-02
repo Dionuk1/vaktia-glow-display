@@ -12,6 +12,7 @@ import { RamadanCountdownCard, ThemePreviewCard } from "./RamadanCountdown";
 import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
 import { onOpenModule } from "@/lib/modules";
+import { SyncOraretButton, LocationQuickSwitch } from "./LocationSync";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,
@@ -21,9 +22,10 @@ import {
   CITY_LABELS,
   ALBANIA_CITIES,
   ALBANIA_CITY_LABELS,
-  
   getCityLabel,
+  getCouncilLabel,
   getRegionLabel,
+  resolveLocationFromCoords,
   fetchLatestFromBIK,
   fetchLiveTodayFromBislame,
   getRemoteMeta,
@@ -54,10 +56,37 @@ const PRAYER_ICONS: Record<keyof DayTimes, typeof Sun> = {
 
 const REGION_KEY = "vaktiaks_selected_region";
 const LEGACY_REGION_KEY = "vaktia-region-v1";
+const ACTIVE_LOCATION_KEY = "vaktiaks_active_location";
 
 export const QIBLA_BY_REGION: Record<RegionKey, number> = { Kosove: 138, Shqiperi: 136 };
 const CITY_KEY = "vaktia-city-v1";
 const AL_CITY_KEY = "vaktia-al-city-v1";
+
+type ActiveLocation = {
+  region: RegionKey;
+  city: CityKey;
+  alCity: AlbaniaCityKey;
+  globalOffset?: number;
+};
+
+function loadActiveLocation(): Partial<ActiveLocation> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ACTIVE_LOCATION_KEY);
+    return raw ? (JSON.parse(raw) as Partial<ActiveLocation>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveActiveLocation(loc: ActiveLocation) {
+  try {
+    localStorage.setItem(ACTIVE_LOCATION_KEY, JSON.stringify(loc));
+    localStorage.setItem(REGION_KEY, loc.region);
+    localStorage.setItem(CITY_KEY, loc.city);
+    localStorage.setItem(AL_CITY_KEY, loc.alCity);
+  } catch {}
+}
 
 const STORAGE_KEY = "vaktia-offsets-v1";
 const GLOBAL_OFFSET_KEY = "vaktia-global-offset-v1";
@@ -137,6 +166,7 @@ export default function PrayerDashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [dataVersion, setDataVersion] = useState(0);
   const [remoteMeta, setRemoteMeta] = useState<RemoteMeta | null>(null);
+  const [detecting, setDetecting] = useState(false);
 
   const activeCity: AnyCityKey = region === "Shqiperi" ? alCity : city;
 
@@ -145,14 +175,17 @@ export default function PrayerDashboard() {
     setOffsets(loadOffsets());
     setRemoteMeta(getRemoteMeta());
     try {
-      const r = (localStorage.getItem(REGION_KEY) ?? localStorage.getItem(LEGACY_REGION_KEY)) as RegionKey | null;
+      const saved = loadActiveLocation();
+      const r = (saved?.region ??
+        localStorage.getItem(REGION_KEY) ??
+        localStorage.getItem(LEGACY_REGION_KEY)) as RegionKey | null;
       if (r === "Kosove" || r === "Shqiperi") setRegion(r);
-      const c = localStorage.getItem(CITY_KEY) as CityKey | null;
+      const c = (saved?.city ?? localStorage.getItem(CITY_KEY)) as CityKey | null;
       if (c && c in CITY_OFFSETS) setCity(c);
-      const ac = localStorage.getItem(AL_CITY_KEY) as AlbaniaCityKey | null;
+      const ac = (saved?.alCity ?? localStorage.getItem(AL_CITY_KEY)) as AlbaniaCityKey | null;
       if (ac && (ALBANIA_CITIES as readonly string[]).includes(ac)) setAlCity(ac);
-      const g = localStorage.getItem(GLOBAL_OFFSET_KEY);
-      if (g !== null) setGlobalOffset(Number(g) || 0);
+      const g = saved?.globalOffset ?? localStorage.getItem(GLOBAL_OFFSET_KEY);
+      if (g !== null && g !== undefined) setGlobalOffset(Number(g) || 0);
     } catch {}
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -230,9 +263,62 @@ export default function PrayerDashboard() {
     });
   }, [next.key, times, remainingSecs]);
 
+  const persist = (next: Partial<ActiveLocation>) => {
+    saveActiveLocation({ region, city, alCity, globalOffset, ...next });
+  };
+
   const changeRegion = (r: RegionKey) => {
     setRegion(r);
-    try { localStorage.setItem(REGION_KEY, r); } catch {}
+    persist({ region: r });
+  };
+
+  const changeCity = (c: CityKey) => {
+    setCity(c);
+    persist({ city: c });
+  };
+
+  const changeAlCity = (c: AlbaniaCityKey) => {
+    setAlCity(c);
+    persist({ alCity: c });
+  };
+
+  // Sinkronizim manual: rimerr oraret zyrtare BIK/KMSH sipas këshillit aktiv
+  const syncNow = async () => {
+    if (region === "Kosove") {
+      await fetchLiveTodayFromBislame().catch(() => {});
+      try {
+        const meta = await fetchLatestFromBIK();
+        setRemoteMeta(meta);
+      } catch {}
+    }
+    setDataVersion((v) => v + 1);
+    setNow(new Date());
+  };
+
+  // Zbulim automatik i vendndodhjes -> këshilli zyrtar më i afërt
+  const autoDetect = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { region: r, city: c } = resolveLocationFromCoords(
+          pos.coords.latitude,
+          pos.coords.longitude,
+        );
+        setRegion(r);
+        if (r === "Shqiperi") {
+          setAlCity(c as AlbaniaCityKey);
+          saveActiveLocation({ region: r, city, alCity: c as AlbaniaCityKey, globalOffset });
+        } else {
+          setCity(c as CityKey);
+          saveActiveLocation({ region: r, city: c as CityKey, alCity, globalOffset });
+        }
+        setDataVersion((v) => v + 1);
+        setDetecting(false);
+      },
+      () => setDetecting(false),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
   };
 
   const daylightMins = Math.max(0, toMin(times.akshami) - toMin(times.lindja));

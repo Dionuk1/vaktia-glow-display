@@ -56,10 +56,37 @@ const PRAYER_ICONS: Record<keyof DayTimes, typeof Sun> = {
 
 const REGION_KEY = "vaktiaks_selected_region";
 const LEGACY_REGION_KEY = "vaktia-region-v1";
+const ACTIVE_LOCATION_KEY = "vaktiaks_active_location";
 
 export const QIBLA_BY_REGION: Record<RegionKey, number> = { Kosove: 138, Shqiperi: 136 };
 const CITY_KEY = "vaktia-city-v1";
 const AL_CITY_KEY = "vaktia-al-city-v1";
+
+type ActiveLocation = {
+  region: RegionKey;
+  city: CityKey;
+  alCity: AlbaniaCityKey;
+  globalOffset?: number;
+};
+
+function loadActiveLocation(): Partial<ActiveLocation> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ACTIVE_LOCATION_KEY);
+    return raw ? (JSON.parse(raw) as Partial<ActiveLocation>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveActiveLocation(loc: ActiveLocation) {
+  try {
+    localStorage.setItem(ACTIVE_LOCATION_KEY, JSON.stringify(loc));
+    localStorage.setItem(REGION_KEY, loc.region);
+    localStorage.setItem(CITY_KEY, loc.city);
+    localStorage.setItem(AL_CITY_KEY, loc.alCity);
+  } catch {}
+}
 
 const STORAGE_KEY = "vaktia-offsets-v1";
 const GLOBAL_OFFSET_KEY = "vaktia-global-offset-v1";

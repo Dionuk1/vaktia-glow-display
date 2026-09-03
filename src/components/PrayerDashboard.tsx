@@ -24,6 +24,7 @@ import {
   ALBANIA_CITY_LABELS,
   getCityLabel,
   getCouncilLabel,
+  getCouncilGenitive,
   getRegionLabel,
   resolveLocationFromCoords,
   fetchLatestFromBIK,
@@ -340,6 +341,7 @@ export default function PrayerDashboard() {
   const updateGlobalOffset = (n: number) => {
     setGlobalOffset(n);
     try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
+    persist({ globalOffset: n });
   };
 
 
@@ -359,7 +361,14 @@ export default function PrayerDashboard() {
           onDismiss={() => setAlertDismissedFor(next.key)}
         />
       )}
-      <SiteHeader menu={<FeaturesDrawer />} />
+      <SiteHeader
+        menu={
+          <div className="flex items-center gap-2">
+            <SyncOraretButton compact region={region} city={activeCity} onSync={syncNow} />
+            <FeaturesDrawer />
+          </div>
+        }
+      />
       <div id="kreu" className="relative min-h-screen w-full pb-20">
 
       <div
@@ -396,28 +405,23 @@ export default function PrayerDashboard() {
                 {getCityLabel(region, activeCity)}, {region === "Shqiperi" ? "Shqipëri 🇦🇱" : "Kosovë 🇽🇰"}
               </span>
             </button>
-            <div className="inline-flex rounded-full border border-[#00D9A3]/20 bg-[#18282E] p-1">
-              {([
-                ["Kosove", "Kosovë · BIK"],
-                ["Shqiperi", "Shqipëri · KMSH"],
-              ] as [RegionKey, string][]).map(([key, label]) => {
-                const active = region === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => changeRegion(key)}
-                    aria-pressed={active}
-                    className={[
-                      "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] transition",
-                      active
-                        ? "bg-[#00D9A3]/15 text-[#00D9A3] shadow-[0_0_20px_rgba(0,217,165,0.2)]"
-                        : "text-[#9CA3AF] hover:text-white",
-                    ].join(" ")}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+            <LocationQuickSwitch
+              region={region}
+              city={city}
+              alCity={alCity}
+              onRegionChange={changeRegion}
+              onCityChange={changeCity}
+              onAlCityChange={changeAlCity}
+              onAutoDetect={autoDetect}
+              detecting={detecting}
+            />
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <span className="rounded-full border border-[#B6FF2E]/25 bg-[#B6FF2E]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#B6FF2E]">
+                {region === "Shqiperi"
+                  ? `Këshilli i ${getCouncilGenitive(region, activeCity)}`
+                  : `Takvimi · ${getCouncilLabel(region, activeCity)}`}
+              </span>
+              <SyncOraretButton compact region={region} city={activeCity} onSync={syncNow} />
             </div>
             <div className="text-sm sm:text-[2.4vh] font-medium text-foreground/90 capitalize">
               {formatGregorian(now)}
@@ -593,15 +597,15 @@ export default function PrayerDashboard() {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); } catch {}
           }}
           onRegionChange={(r) => {
-            setRegion(r);
+            changeRegion(r);
             try { localStorage.setItem(REGION_KEY, r); } catch {}
           }}
           onCityChange={(c) => {
-            setCity(c);
+            changeCity(c);
             try { localStorage.setItem(CITY_KEY, c); } catch {}
           }}
           onAlCityChange={(c) => {
-            setAlCity(c);
+            changeAlCity(c);
             try { localStorage.setItem(AL_CITY_KEY, c); } catch {}
           }}
           onUpdated={(meta) => {

@@ -6,6 +6,7 @@ import {
   ALBANIA_CITY_LABELS,
   CITY_LABELS,
   getCouncilLabel,
+  getCouncilGenitive,
   type AnyCityKey,
   type AlbaniaCityKey,
   type CityKey,
@@ -55,7 +56,7 @@ export function SyncOraretButton({
     try {
       await onSync();
       setToast(
-        `Oraret e namazit u sinkronizuan me sukses 100% sipas Këshillit të ${getCouncilLabel(region, city)}`,
+        `Oraret e namazit u sinkronizuan me sukses 100% sipas Këshillit të ${getCouncilGenitive(region, city)}`,
       );
     } catch {
       setToast("Sinkronizimi dështoi — provo përsëri.");
@@ -136,7 +137,7 @@ export function LocationQuickSwitch({
         >
           {(ALBANIA_CITIES as readonly AlbaniaCityKey[]).map((c) => (
             <option key={c} value={c}>
-              {ALBANIA_CITY_LABELS[c]} · Këshilli i {getCouncilLabel("Shqiperi", c)}
+              {ALBANIA_CITY_LABELS[c]} · Këshilli i {getCouncilGenitive("Shqiperi", c)}
             </option>
           ))}
         </select>

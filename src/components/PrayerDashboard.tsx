@@ -596,15 +596,15 @@ export default function PrayerDashboard() {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); } catch {}
           }}
           onRegionChange={(r) => {
-            setRegion(r);
+            changeRegion(r);
             try { localStorage.setItem(REGION_KEY, r); } catch {}
           }}
           onCityChange={(c) => {
-            setCity(c);
+            changeCity(c);
             try { localStorage.setItem(CITY_KEY, c); } catch {}
           }}
           onAlCityChange={(c) => {
-            setAlCity(c);
+            changeAlCity(c);
             try { localStorage.setItem(AL_CITY_KEY, c); } catch {}
           }}
           onUpdated={(meta) => {

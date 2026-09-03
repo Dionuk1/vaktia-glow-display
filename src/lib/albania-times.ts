@@ -224,7 +224,7 @@ export function computeCouncilTimes(date: Date, council: AlbaniaCouncilKey): Day
   const fajrHA = hourAngle(-FAJR_ANGLE, lat, decl);
   const ishaHA = hourAngle(-ISHA_ANGLE, lat, decl);
 
-  const asrAltitude = -atan2d(1, ASR_SHADOW_FACTOR + tan(Math.abs(lat - decl)));
+  const asrAltitude = atan2d(1, ASR_SHADOW_FACTOR + tan(Math.abs(lat - decl)));
   const asrHA = hourAngle(asrAltitude, lat, decl);
 
   const sunrise = sunriseHA !== null ? noon - sunriseHA : noon - 6;

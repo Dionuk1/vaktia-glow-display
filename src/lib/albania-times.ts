@@ -280,3 +280,23 @@ export function nearestAlbanianCity(lat: number, lon: number): AlbaniaCityKey {
 export function isInsideAlbania(lat: number, lon: number): boolean {
   return lat >= 39.6 && lat <= 42.7 && lon >= 19.0 && lon <= 21.06;
 }
+
+// Forma gjinore (genitive) e emrave — "Këshilli i Lezhës"
+export const ALBANIA_COUNCIL_GENITIVE: Record<AlbaniaCouncilKey, string> = {
+  Tirane: "Tiranës",
+  Shkoder: "Shkodrës",
+  Lezhe: "Lezhës",
+  Durres: "Durrësit",
+  Elbasan: "Elbasanit",
+  Korce: "Korçës",
+  Vlore: "Vlorës",
+  Fier: "Fierit",
+  Gjirokaster: "Gjirokastrës",
+  Kukes: "Kukësit",
+  Berat: "Beratit",
+  Diber: "Dibrës",
+};
+
+export function getCouncilGenitiveForCity(city: AlbaniaCityKey): string {
+  return ALBANIA_COUNCIL_GENITIVE[getCouncilForCity(city)];
+}

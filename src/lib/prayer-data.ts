@@ -165,6 +165,7 @@ import {
   getAlbanianMonthTimes,
   getCouncilForCity,
   getCouncilLabelForCity,
+  getCouncilGenitiveForCity,
   nearestAlbanianCity,
   isInsideAlbania,
   type AlbaniaCityKey,
@@ -193,6 +194,12 @@ export function getCityLabel(region: RegionKey, city: AnyCityKey): string {
 /** Emri i Këshillit (Myftinisë) / qytetit referues për oraret aktive. */
 export function getCouncilLabel(region: RegionKey, city: AnyCityKey): string {
   if (region === "Shqiperi") return getCouncilLabelForCity(city as AlbaniaCityKey);
+  return CITY_LABELS[city as CityKey] ?? String(city);
+}
+
+/** Emri i Këshillit në rasën gjinore: "Këshilli i Lezhës" */
+export function getCouncilGenitive(region: RegionKey, city: AnyCityKey): string {
+  if (region === "Shqiperi") return getCouncilGenitiveForCity(city as AlbaniaCityKey);
   return CITY_LABELS[city as CityKey] ?? String(city);
 }
 
@@ -274,6 +281,7 @@ export {
   ALBANIA_COUNCIL_LABELS,
   getCouncilForCity,
   getCouncilLabelForCity,
+  getCouncilGenitiveForCity,
   nearestAlbanianCity,
   isInsideAlbania,
 };

@@ -24,6 +24,7 @@ import {
   ALBANIA_CITY_LABELS,
   getCityLabel,
   getCouncilLabel,
+  getCouncilGenitive,
   getRegionLabel,
   resolveLocationFromCoords,
   fetchLatestFromBIK,
@@ -417,7 +418,7 @@ export default function PrayerDashboard() {
             <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
               <span className="rounded-full border border-[#B6FF2E]/25 bg-[#B6FF2E]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#B6FF2E]">
                 {region === "Shqiperi"
-                  ? `Këshilli i ${getCouncilLabel(region, activeCity)}`
+                  ? `Këshilli i ${getCouncilGenitive(region, activeCity)}`
                   : `Takvimi · ${getCouncilLabel(region, activeCity)}`}
               </span>
               <SyncOraretButton compact region={region} city={activeCity} onSync={syncNow} />

@@ -1,14 +1,20 @@
 // =============================================================================
-// KMSH (Komuniteti Mysliman i Shqipërisë) — Takvimi 2026
+// KMSH (Komuniteti Mysliman i Shqipërisë) — Takvimi
 // Këshillat e Myftinive + qytetet bregdetare të pushimeve
 //
 // Burimi zyrtar: https://kmsh.al/takvimi/
 //
-// Struktura: çdo qytet i zgjedhur mapohet 100% në Këshillin (Myftininë) zyrtare.
+// Motori i llogaritjes: pozicioni real i diellit (algoritmi standard astronomik),
+// i kalibruar sipas parametrave zyrtarë të KMSH:
+//   Imsaku / Sabahu  -> 18° nën horizont (Sabahu = Imsaku + 30 min, si në takvim)
+//   Ikindia          -> Hanefi (hija = 2x)
+//   Akshami          -> +3 min pas perëndimit
+//   Jacia            -> 17° nën horizont
+// Çdo Këshill llogaritet me koordinatat e tij reale, kështu që Tirana, Shkodra,
+// Lezha, Vlora etc. dalin me kohë të ndryshme e të sakta gjeografikisht.
+//
 //   Shëngjin  -> Këshilli i Lezhës
 //   Velipojë  -> Këshilli i Shkodrës
-// Oraret bazë (seed) janë të Shkodrës; çdo Këshill përdorin korrigjim minutash
-// sipas gjatësisë gjeografike derisa të vendosen tabelat e plota zyrtare.
 // =============================================================================
 
 import type { DayTimes } from "./prayer-data";
@@ -117,88 +123,130 @@ export const ALBANIA_CITY_COORDS: Record<AlbaniaCityKey, { lat: number; lon: num
   Diber: { lat: 41.6853, lon: 20.4292 },
 };
 
-// -----------------------------------------------------------------------------
-// SEED — Qershor / Korrik 2026 (Shkodër, DST CEST)
-// Zëvendëso me kalendarin e plotë zyrtar kur ta kesh në dorë.
-// -----------------------------------------------------------------------------
-
-type DayMap = Record<string, DayTimes>;
-
-const SHKODER_SEED: DayMap = {
-  "06-01": { imsaku: "02:42", sabahu: "03:12", lindja: "05:01", dreka: "12:39", ikindia: "16:38", akshami: "20:16", jacia: "22:05" },
-  "06-15": { imsaku: "02:38", sabahu: "03:08", lindja: "04:58", dreka: "12:41", ikindia: "16:42", akshami: "20:24", jacia: "22:14" },
-  "06-30": { imsaku: "02:42", sabahu: "03:12", lindja: "05:02", dreka: "12:45", ikindia: "16:45", akshami: "20:27", jacia: "22:15" },
-  "07-15": { imsaku: "02:55", sabahu: "03:25", lindja: "05:12", dreka: "12:47", ikindia: "16:44", akshami: "20:21", jacia: "22:05" },
-  "07-31": { imsaku: "03:21", sabahu: "03:51", lindja: "05:28", dreka: "12:48", ikindia: "16:38", akshami: "20:06", jacia: "21:42" },
-};
-
-const REF_LON = ALBANIA_CITY_COORDS.Shkoder.lon;
-
-// Korrigjim minutash sipas gjatësisë gjeografike (4 min / gradë), relativ me Shkodrën.
-export const COUNCIL_MINUTE_OFFSETS: Record<AlbaniaCouncilKey, number> = ALBANIA_COUNCILS.reduce(
-  (acc, c) => {
-    acc[c] = Math.round((REF_LON - ALBANIA_CITY_COORDS[c].lon) * 4);
-    return acc;
-  },
-  {} as Record<AlbaniaCouncilKey, number>,
-);
-
-export const KMSH_2026: Record<AlbaniaCouncilKey, DayMap> = ALBANIA_COUNCILS.reduce(
-  (acc, c) => {
-    acc[c] = SHKODER_SEED;
-    return acc;
-  },
-  {} as Record<AlbaniaCouncilKey, DayMap>,
-);
+// Koordinatat zyrtare të Këshillit (qendra e Myftinisë) — bazë e llogaritjes
+export const COUNCIL_COORDS: Record<AlbaniaCouncilKey, { lat: number; lon: number }> =
+  ALBANIA_COUNCILS.reduce(
+    (acc, c) => {
+      acc[c] = ALBANIA_CITY_COORDS[c];
+      return acc;
+    },
+    {} as Record<AlbaniaCouncilKey, { lat: number; lon: number }>,
+  );
 
 // -----------------------------------------------------------------------------
-// Helpers
+// Parametrat KMSH
 // -----------------------------------------------------------------------------
 
-function toMin(t: string) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-}
-function fmtMin(n: number) {
-  const h = Math.floor(n / 60 + 24) % 24;
-  const m = ((n % 60) + 60) % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-}
+const FAJR_ANGLE = 18; // Imsaku
+const ISHA_ANGLE = 17; // Jacia
+const SABAH_AFTER_IMSAK = 30; // minuta
+const MAGHRIB_DELAY = 3; // minuta pas perëndimit
+const ASR_SHADOW_FACTOR = 2; // Hanefi
 
-function dateKey(d: Date): string {
-  return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+const DEG = Math.PI / 180;
+const sin = (d: number) => Math.sin(d * DEG);
+const cos = (d: number) => Math.cos(d * DEG);
+const tan = (d: number) => Math.tan(d * DEG);
+const asin = (x: number) => Math.asin(x) / DEG;
+const acos = (x: number) => Math.acos(x) / DEG;
+const atan2d = (y: number, x: number) => Math.atan2(y, x) / DEG;
 
-function findClosestKey(map: DayMap, target: string): string | null {
-  const keys = Object.keys(map).sort();
-  if (keys.length === 0) return null;
-  let best = keys[0];
-  let bestDelta = Infinity;
-  const [m2, d2] = target.split("-").map(Number);
-  for (const k of keys) {
-    const [m1, d1] = k.split("-").map(Number);
-    const dist = Math.abs((m1 * 31 + d1) - (m2 * 31 + d2));
-    if (dist < bestDelta) {
-      best = k;
-      bestDelta = dist;
-    }
+function julianDay(y: number, m: number, d: number) {
+  if (m <= 2) {
+    y -= 1;
+    m += 12;
   }
-  return best;
+  const a = Math.floor(y / 100);
+  const b = 2 - a + Math.floor(a / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + b - 1524.5;
+}
+
+/** Deklinacioni i diellit (deg) dhe ekuacioni i kohës (min) */
+function sunPosition(jd: number) {
+  const d = jd - 2451545.0;
+  const g = (357.529 + 0.98560028 * d) % 360;
+  const q = (280.459 + 0.98564736 * d) % 360;
+  const L = (q + 1.915 * sin(g) + 0.02 * sin(2 * g)) % 360;
+  const e = 23.439 - 0.00000036 * d;
+  const RA = atan2d(cos(e) * sin(L), cos(L)) / 15;
+  const decl = asin(sin(e) * sin(L));
+  const eqt = q / 15 - ((RA + 24) % 24);
+  return { decl, eqt: eqt * 60 };
+}
+
+/** Gjysma e kohëzgjatjes së harkut për një lartësi të dhënë (në orë) */
+function hourAngle(altitude: number, lat: number, decl: number): number | null {
+  const x =
+    (sin(altitude) - sin(lat) * sin(decl)) / (cos(lat) * cos(decl));
+  if (x > 1 || x < -1) return null;
+  return acos(x) / 15;
+}
+
+/** Offset-i i kohës lokale në Shqipëri (CET/CEST) për një datë */
+function albaniaUtcOffset(date: Date): number {
+  const y = date.getFullYear();
+  const lastSunday = (month: number) => {
+    const d = new Date(Date.UTC(y, month + 1, 0));
+    d.setUTCDate(d.getUTCDate() - d.getUTCDay());
+    return d;
+  };
+  const dstStart = lastSunday(2); // Mars, 01:00 UTC
+  dstStart.setUTCHours(1, 0, 0, 0);
+  const dstEnd = lastSunday(9); // Oktober, 01:00 UTC
+  dstEnd.setUTCHours(1, 0, 0, 0);
+  const utcNoon = Date.UTC(y, date.getMonth(), date.getDate(), 12);
+  return utcNoon >= dstStart.getTime() && utcNoon < dstEnd.getTime() ? 2 : 1;
+}
+
+function fmtHours(h: number): string {
+  let mins = Math.round(h * 60);
+  mins = ((mins % 1440) + 1440) % 1440;
+  const hh = Math.floor(mins / 60);
+  const mm = mins % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+// -----------------------------------------------------------------------------
+// Motori i llogaritjes për një Këshill
+// -----------------------------------------------------------------------------
+
+export function computeCouncilTimes(date: Date, council: AlbaniaCouncilKey): DayTimes {
+  const { lat, lon } = COUNCIL_COORDS[council] ?? COUNCIL_COORDS.Tirane;
+  const tz = albaniaUtcOffset(date);
+  const jd = julianDay(date.getFullYear(), date.getMonth() + 1, date.getDate()) - lon / (15 * 24);
+  const { decl, eqt } = sunPosition(jd);
+
+  // Mesdita e vërtetë diellore (dreka) + 3 min ihtiat si në takvim
+  const noon = 12 - eqt / 60 - lon / 15 + tz;
+  const dhuhr = noon + 3 / 60;
+
+  const sunriseHA = hourAngle(-0.833, lat, decl);
+  const fajrHA = hourAngle(-FAJR_ANGLE, lat, decl);
+  const ishaHA = hourAngle(-ISHA_ANGLE, lat, decl);
+
+  const asrAltitude = -atan2d(1, ASR_SHADOW_FACTOR + tan(Math.abs(lat - decl)));
+  const asrHA = hourAngle(asrAltitude, lat, decl);
+
+  const sunrise = sunriseHA !== null ? noon - sunriseHA : noon - 6;
+  const sunset = sunriseHA !== null ? noon + sunriseHA : noon + 6;
+  const imsak = fajrHA !== null ? noon - fajrHA : sunrise - 1.5;
+  const asr = asrHA !== null ? noon + asrHA : noon + 4;
+  const maghrib = sunset + MAGHRIB_DELAY / 60;
+  const isha = ishaHA !== null ? noon + ishaHA : maghrib + 1.5;
+
+  return {
+    imsaku: fmtHours(imsak),
+    sabahu: fmtHours(imsak + SABAH_AFTER_IMSAK / 60),
+    lindja: fmtHours(sunrise),
+    dreka: fmtHours(dhuhr),
+    ikindia: fmtHours(asr),
+    akshami: fmtHours(maghrib),
+    jacia: fmtHours(Math.max(isha, maghrib + 70 / 60)),
+  };
 }
 
 export function getAlbanianTimesForDate(date: Date, city: AlbaniaCityKey): DayTimes {
-  const council = getCouncilForCity(city);
-  const map = KMSH_2026[council] ?? SHKODER_SEED;
-  const key = dateKey(date);
-  const useKey = map[key] ? key : findClosestKey(map, key);
-  const base = useKey ? map[useKey] : SHKODER_SEED["06-15"];
-  const offset = COUNCIL_MINUTE_OFFSETS[council] ?? 0;
-  if (offset === 0) return { ...base };
-  const out = {} as DayTimes;
-  (Object.keys(base) as (keyof DayTimes)[]).forEach((k) => {
-    out[k] = fmtMin(toMin(base[k]) + offset);
-  });
-  return out;
+  return computeCouncilTimes(date, getCouncilForCity(city));
 }
 
 export function getAlbanianMonthTimes(year: number, month: number, city: AlbaniaCityKey) {

@@ -360,7 +360,14 @@ export default function PrayerDashboard() {
           onDismiss={() => setAlertDismissedFor(next.key)}
         />
       )}
-      <SiteHeader menu={<FeaturesDrawer />} />
+      <SiteHeader
+        menu={
+          <div className="flex items-center gap-2">
+            <SyncOraretButton compact region={region} city={activeCity} onSync={syncNow} />
+            <FeaturesDrawer />
+          </div>
+        }
+      />
       <div id="kreu" className="relative min-h-screen w-full pb-20">
 
       <div

@@ -7,7 +7,7 @@
 // Motori i llogaritjes: pozicioni real i diellit (algoritmi standard astronomik),
 // i kalibruar sipas parametrave zyrtarë të KMSH:
 //   Imsaku / Sabahu  -> 18° nën horizont (Sabahu = Imsaku + 30 min, si në takvim)
-//   Ikindia          -> Hanefi (hija = 2x)
+//   Ikindia          -> hija = 1x (si në takvimin e KMSH)
 //   Akshami          -> +3 min pas perëndimit
 //   Jacia            -> 17° nën horizont
 // Çdo Këshill llogaritet me koordinatat e tij reale, kështu që Tirana, Shkodra,
@@ -141,7 +141,7 @@ const FAJR_ANGLE = 18; // Imsaku
 const ISHA_ANGLE = 17; // Jacia
 const SABAH_AFTER_IMSAK = 30; // minuta
 const MAGHRIB_DELAY = 3; // minuta pas perëndimit
-const ASR_SHADOW_FACTOR = 2; // Hanefi
+const ASR_SHADOW_FACTOR = 1; // KMSH takvim (hija = 1x)
 
 const DEG = Math.PI / 180;
 const sin = (d: number) => Math.sin(d * DEG);

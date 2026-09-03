@@ -340,6 +340,7 @@ export default function PrayerDashboard() {
   const updateGlobalOffset = (n: number) => {
     setGlobalOffset(n);
     try { localStorage.setItem(GLOBAL_OFFSET_KEY, String(n)); } catch {}
+    persist({ globalOffset: n });
   };
 
 

@@ -13,6 +13,7 @@ import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
 import { onOpenModule } from "@/lib/modules";
 import { SyncOraretButton, LocationQuickSwitch } from "./LocationSync";
+import InstallAppPrompt from "./InstallAppPrompt";
 import {
   getMonthTimesForLocation,
   getTimesForLocation,
@@ -616,6 +617,7 @@ export default function PrayerDashboard() {
       )}
       <SiteFooter />
       <CookieConsent />
+      <InstallAppPrompt />
       <GlobalModuleHost />
     </div>
   );

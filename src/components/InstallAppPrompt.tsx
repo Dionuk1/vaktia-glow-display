@@ -67,7 +67,7 @@ export default function InstallAppPrompt() {
   return createPortal(
     <aside
       aria-label="Instalo VaktiaKS"
-      className="fixed inset-x-3 bottom-3 z-[90] mx-auto w-auto max-w-md rounded-lg border border-primary/30 bg-surface p-4 shadow-[0_0_20px_color-mix(in_oklab,var(--color-primary)_20%,transparent)] sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[25rem]"
+      className="fixed bottom-3 left-1/2 z-[90] w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 rounded-lg border border-primary/30 bg-surface p-4 shadow-[0_0_20px_color-mix(in_oklab,var(--color-primary)_20%,transparent)] sm:bottom-5"
     >
       <button
         type="button"

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Download, Plus, Share2, Smartphone, X } from "lucide-react";
 
 const DISMISSED_KEY = "vaktiaks_install_dismissed";
@@ -63,7 +64,7 @@ export default function InstallAppPrompt() {
 
   if (!visible) return null;
 
-  return (
+  return createPortal(
     <aside
       aria-label="Instalo VaktiaKS"
       className="fixed inset-x-3 bottom-3 z-[90] mx-auto w-auto max-w-md rounded-lg border border-primary/30 bg-surface p-4 shadow-[0_0_20px_color-mix(in_oklab,var(--color-primary)_20%,transparent)] sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[25rem]"
@@ -112,6 +113,7 @@ export default function InstallAppPrompt() {
           )}
         </div>
       )}
-    </aside>
+    </aside>,
+    document.body,
   );
 }

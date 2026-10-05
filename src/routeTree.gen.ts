@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KalendariRamazanitRouteImport } from './routes/kalendari-ramazanit'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as ApiPublicBikTodayRouteImport } from './routes/api/public/bik-today'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,11 +26,22 @@ const KalendariRamazanitRoute = KalendariRamazanitRouteImport.update({
   path: '/kalendari-ramazanit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBikTodayRoute = ApiPublicBikTodayRouteImport.update({
   id: '/api/public/bik-today',
   path: '/api/public/bik-today',
@@ -38,40 +51,61 @@ const ApiPublicBikTodayRoute = ApiPublicBikTodayRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/kalendari-ramazanit': typeof KalendariRamazanitRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/public/bik-today': typeof ApiPublicBikTodayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/kalendari-ramazanit': typeof KalendariRamazanitRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/public/bik-today': typeof ApiPublicBikTodayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/kalendari-ramazanit': typeof KalendariRamazanitRoute
+  '/mcp': typeof McpRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/public/bik-today': typeof ApiPublicBikTodayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/kalendari-ramazanit' | '/sitemap.xml' | '/api/public/bik-today'
+    | '/'
+    | '/kalendari-ramazanit'
+    | '/mcp'
+    | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
+    | '/api/public/bik-today'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/kalendari-ramazanit' | '/sitemap.xml' | '/api/public/bik-today'
+  to:
+    | '/'
+    | '/kalendari-ramazanit'
+    | '/mcp'
+    | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
+    | '/api/public/bik-today'
   id:
     | '__root__'
     | '/'
     | '/kalendari-ramazanit'
+    | '/mcp'
     | '/sitemap.xml'
+    | '/.well-known/oauth-protected-resource'
     | '/api/public/bik-today'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   KalendariRamazanitRoute: typeof KalendariRamazanitRoute
+  McpRoute: typeof McpRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiPublicBikTodayRoute: typeof ApiPublicBikTodayRoute
 }
 
@@ -91,11 +125,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KalendariRamazanitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/bik-today': {
@@ -111,7 +159,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   KalendariRamazanitRoute: KalendariRamazanitRoute,
+  McpRoute: McpRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiPublicBikTodayRoute: ApiPublicBikTodayRoute,
 }
 export const routeTree = rootRouteImport

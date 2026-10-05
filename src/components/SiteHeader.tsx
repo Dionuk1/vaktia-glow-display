@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import logo from "@/assets/vaktiaks-logo.png.asset.json";
+import ConnectionStatus from "./ConnectionStatus";
 
 export function BrandLogo({
   size = 44,
@@ -85,7 +86,10 @@ export default function SiteHeader({ menu }: { menu?: React.ReactNode }) {
         </nav>
 
 
-        <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">{menu}</div>
+        <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">
+          <ConnectionStatus />
+          {menu}
+        </div>
       </div>
     </motion.header>
   );

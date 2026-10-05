@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Modal } from "./FeatureModals";
 import pdfAsset from "@/assets/falja-namazit.pdf.asset.json";
+import PdfPagesViewer from "./PdfPagesViewer";
 
 type TabId = "pdf" | "abdes" | "rekate" | "hapat" | "ajete";
 
@@ -145,73 +146,18 @@ function VocalBadge({ vocal }: { vocal: Vocal }) {
 }
 
 function PdfReader() {
-  const [page, setPage] = useState(1);
-  const [zoom, setZoom] = useState(100);
-  const src = `${pdfAsset.url}#page=${page}&zoom=${zoom}`;
-
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-background/60 p-2">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            aria-label="Faqja e mëparshme"
-            className="rounded-full border border-border p-2 text-foreground/80 transition hover:border-primary/40 hover:text-primary active:scale-95"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <input
-            type="number"
-            min={1}
-            value={page}
-            onChange={(e) => setPage(Math.max(1, Number(e.target.value) || 1))}
-            className="w-14 rounded-lg border border-border bg-surface/60 px-2 py-1.5 text-center text-sm tabular-nums text-foreground outline-none focus:border-primary/50"
-            aria-label="Numri i faqes"
-          />
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            aria-label="Faqja tjetër"
-            className="rounded-full border border-border p-2 text-foreground/80 transition hover:border-primary/40 hover:text-primary active:scale-95"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setZoom((z) => Math.max(50, z - 25))}
-            aria-label="Zvogëlo"
-            className="rounded-full border border-border p-2 text-foreground/80 transition hover:border-primary/40 hover:text-primary active:scale-95"
-          >
-            <ZoomOut className="size-4" />
-          </button>
-          <span className="w-12 text-center text-xs tabular-nums text-muted-foreground">{zoom}%</span>
-          <button
-            onClick={() => setZoom((z) => Math.min(250, z + 25))}
-            aria-label="Zmadho"
-            className="rounded-full border border-border p-2 text-foreground/80 transition hover:border-primary/40 hover:text-primary active:scale-95"
-          >
-            <ZoomIn className="size-4" />
-          </button>
-        </div>
-
+      <div className="flex justify-end">
         <a
           href={pdfAsset.url}
           download="Falja_e_Namazit_DIGITAL.pdf"
-          className="ml-auto inline-flex items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:opacity-90 active:scale-95"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:opacity-90 active:scale-95"
         >
           <Download className="size-4" /> Shkarko
         </a>
       </div>
-
-      <div className="overflow-hidden rounded-2xl border border-primary/20 bg-background">
-        <iframe
-          key={src}
-          src={src}
-          title="Falja e Namazit — libri dixhital"
-          className="h-[60vh] w-full"
-        />
-      </div>
+      <PdfPagesViewer url={pdfAsset.url} />
       <p className="text-xs leading-relaxed text-muted-foreground">
         Nëse lexuesi nuk shfaqet në pajisjen tuaj, shkarkoni PDF-në dhe lexojeni offline.
       </p>

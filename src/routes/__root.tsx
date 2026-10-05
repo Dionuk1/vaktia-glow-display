@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { useEffect } from "react";
+import { registerAppServiceWorker } from "@/lib/pwa-register";
 
 function NotFoundComponent() {
   return (
@@ -116,6 +118,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    registerAppServiceWorker();
+  }, []);
+
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,3 +1,3 @@
 # Architecture rules
 
-- Keep home-screen installation manifest-only unless offline support is explicitly requested, to prevent stale app caches in previews.
+- Offline support uses vite-plugin-pwa generateSW registered only via src/lib/pwa-register.ts (guarded against dev/preview), so previews never serve stale caches.

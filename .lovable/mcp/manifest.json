@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "vaktia-ks",
+      "version": "0.1.0",
+      "title": "Vaktia KS"
+    },
+    "tools": [
+      {
+        "name": "list_cities",
+        "title": "List cities",
+        "description": "List the supported city keys for Kosovo and Albania, with Qibla bearings.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_prayer_times",
+        "title": "Get prayer times",
+        "description": "Return the daily prayer times (Imsaku to Jacia) for a Kosovo (BIK) or Albania (KMSH) city on a date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "region": {
+              "type": "string",
+              "enum": [
+                "Kosove",
+                "Shqiperi"
+              ],
+              "description": "Kosove (BIK) or Shqiperi (KMSH)."
+            },
+            "city": {
+              "type": "string",
+              "minLength": 1,
+              "description": "City key from list_cities, e.g. Prishtina or Shengjin."
+            },
+            "date": {
+              "description": "Date YYYY-MM-DD; defaults to today.",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          },
+          "required": [
+            "region",
+            "city"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

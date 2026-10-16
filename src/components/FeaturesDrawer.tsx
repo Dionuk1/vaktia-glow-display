@@ -1,3 +1,4 @@
+import { SunnahModal } from "./SunnahTracker";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
@@ -150,7 +151,7 @@ export function FeatureModalHost({
     case "analytics":
       return <AnalyticsModal onClose={onClose} />;
     case "kaza":
-      return <KazaModal onClose={onClose} />;
+      return <SunnahModal onClose={onClose} />;
     case "streaks":
       return <StreaksModal onClose={onClose} />;
     case "mosque":

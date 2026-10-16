@@ -8,7 +8,8 @@ import IslamicHolidays, { HolidayCountdownBadges } from "./IslamicHolidays";
 import FeaturesDrawer, { FeatureShowcaseGrid, FeatureModalHost, GlobalModuleHost } from "./FeaturesDrawer";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
-import { RamadanCountdownCard, ThemePreviewCard } from "./RamadanCountdown";
+import { RamadanCountdownCard } from "./RamadanCountdown";
+import ScrollToTop from "./ScrollToTop";
 import { setNextPrayer } from "@/lib/next-prayer";
 import CookieConsent from "./CookieConsent";
 import { onOpenModule } from "@/lib/modules";
@@ -618,6 +619,7 @@ export default function PrayerDashboard() {
       <SiteFooter />
       <CookieConsent />
       <InstallAppPrompt />
+      <ScrollToTop />
       <GlobalModuleHost />
     </div>
   );
@@ -667,7 +669,7 @@ function ExtraSection({
       <HolidayCountdownBadges />
 
       {/* Theme preview */}
-      <ThemePreviewCard />
+      
 
       {/* Busulla-Kibla card */}
       <div id="kibla" className="rounded-3xl bg-surface/60 backdrop-blur card-glow p-5 sm:p-7">

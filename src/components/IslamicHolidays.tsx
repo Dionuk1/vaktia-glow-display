@@ -8,13 +8,14 @@ export type Holiday = {
   emoji: string;
 };
 
-export const HOLIDAYS_2026: Holiday[] = [
-  { name: "Nata e Kadrit", hijri: "Nata e 27-të e Ramazanit", weekday: "E Martë", date: new Date(2026, 2, 16), emoji: "🌙" },
-  { name: "Fitër Bajrami", hijri: "1 Shawwal 1447 H", weekday: "E Premte", date: new Date(2026, 2, 20), emoji: "🕌" },
-  { name: "Dita e Arafatit", hijri: "9 Dhu al-Hijjah 1447 H", weekday: "E Hënë", date: new Date(2026, 4, 25), emoji: "⛰️" },
-  { name: "Kurban Bajrami", hijri: "10 Dhu al-Hijjah 1447 H", weekday: "E Martë", date: new Date(2026, 4, 26), emoji: "🐏" },
-  { name: "Ramazani 2027", hijri: "1 Ramazan 1448 H", weekday: "E Hënë", date: new Date(2027, 1, 8), emoji: "✨" },
+export const HOLIDAYS_2027: Holiday[] = [
+  { name: "Dita e parë e Ramazanit", hijri: "1 Ramazan 1448 H", weekday: "E Hënë", date: new Date(2027, 1, 8), emoji: "🌙" },
+  { name: "Fitër Bajrami", hijri: "1 Shawwal 1448 H", weekday: "E Martë", date: new Date(2027, 2, 9), emoji: "🎉" },
+  { name: "Dita e Arafatit", hijri: "9 Dhu al-Hijjah 1448 H", weekday: "E Shtunë", date: new Date(2027, 4, 15), emoji: "🕋" },
+  { name: "Kurban Bajrami", hijri: "10 Dhu al-Hijjah 1448 H", weekday: "E Diel", date: new Date(2027, 4, 16), emoji: "🐑" },
 ];
+/** @deprecated alias */
+export const HOLIDAYS_2026 = HOLIDAYS_2027;
 
 const MONTHS_SQ = [
   "Janar", "Shkurt", "Mars", "Prill", "Maj", "Qershor",
@@ -37,7 +38,7 @@ export function HolidayCountdownBadges() {
     return () => clearInterval(id);
   }, []);
   if (!now) return null;
-  const upcoming = HOLIDAYS_2026.filter((h) => h.date.getTime() > now.getTime()).slice(0, 3);
+  const upcoming = HOLIDAYS_2027.filter((h) => h.date.getTime() > now.getTime()).slice(0, 3);
   if (!upcoming.length) return null;
 
   return (
@@ -65,10 +66,10 @@ export default function IslamicHolidays() {
   return (
     <div className="space-y-3 p-5 sm:p-7">
       <p className="text-sm text-[#9CA3AF]">
-        Datat zyrtare sipas kalendarit të Bashkësisë Islame të Kosovës (BIK) për vitin 2026.
+        Datat zyrtare sipas kalendarit të Bashkësisë Islame të Kosovës (BIK) për vitin 2027.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
-        {HOLIDAYS_2026.map((h) => {
+        {HOLIDAYS_2027.map((h) => {
           const left = now ? daysLeft(h.date, now) : null;
           const passed = left !== null && left < 0;
           return (

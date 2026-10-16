@@ -726,13 +726,13 @@ function ExtraSection({
             <div className="text-lg sm:text-xl font-semibold mt-1">
               {calTab === "orari"
                 ? `${MONTH_NAMES_SQ[month]} ${year} · ${getCityLabel(region, city)}`
-                : "Festat Islame 2026"}
+                : "Festat Islame 2027"}
             </div>
           </div>
           <div className="inline-flex shrink-0 rounded-full border border-[#00D9A3]/20 bg-[#0B1E24] p-1">
             {([
               ["orari", "Orari mujor"],
-              ["festat", "Festat Islame 2026"],
+              ["festat", "Festat Islame 2027"],
             ] as const).map(([id, label]) => (
               <button
                 key={id}

@@ -14,13 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      sunnah_logs: {
+        Row: {
+          created_at: string
+          id: string
+          log_date: string
+          prayer: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          log_date?: string
+          prayer: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          log_date?: string
+          prayer?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_sunnah_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          display_name: string
+          is_me: boolean
+          total: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

@@ -4,6 +4,8 @@
 // Reference city: Deçan. Apply per-city offset for other locations.
 
 import bikTimes from "./bik-times.json";
+import { seasonalCorrection } from "./kosovo-season";
+export { KOSOVO_FRIDAY } from "./kosovo-season";
 
 export type DayTimes = {
   imsaku: string;
@@ -100,11 +102,21 @@ export function getTimesForDate(date: Date, city: CityKey = "Prishtina"): DayTim
   let key = dateKey(date);
   if (!map[key]) key = "02-28";
   const base = { ...map[key] };
+  const sourceYear = override ? (getRemoteMeta()?.year ?? 2026) : 2026;
+  const seasonalOffset = seasonalCorrection(date, sourceYear);
+  for (const k of Object.keys(base) as (keyof DayTimes)[]) {
+    base[k] = fmtMin(toMin(base[k]) + seasonalOffset);
+  }
   // Merge live (Deçan-based) values for today, overriding bundled
   if (liveToday && liveToday.date === isoDate(date)) {
+    // A stale upstream summer clock must not overwrite winter rows. Compare
+    // noon (slow daily drift) with the date-specific BIK civil-time baseline.
+    const liveNoon = liveToday.times.dreka;
+    const delta = liveNoon ? toMin(liveNoon) - toMin(base.dreka) : 0;
+    const liveCorrection = delta >= 45 && delta <= 75 ? -60 : delta <= -45 && delta >= -75 ? 60 : 0;
     for (const k of Object.keys(liveToday.times) as (keyof DayTimes)[]) {
       const v = liveToday.times[k];
-      if (v) base[k] = v;
+      if (v) base[k] = fmtMin(toMin(v) + liveCorrection);
     }
   }
   const offset = CITY_OFFSETS[city];
@@ -375,7 +387,9 @@ export async function fetchLiveTodayFromBislame(): Promise<LiveMeta> {
     fetchedAt: string;
     times: Partial<DayTimes>;
   };
-  const date = json.date ?? isoDate(new Date());
+  // Undated or stale pages cannot be asserted to contain today's timetable.
+  if (!json.date || json.date !== isoDate(new Date())) throw new Error("Orari i BIK nuk është i datës së sotme");
+  const date = json.date;
   liveToday = { date, times: json.times };
   try {
     localStorage.setItem(LIVE_KEY, JSON.stringify(liveToday));

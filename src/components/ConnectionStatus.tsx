@@ -40,7 +40,7 @@ export default function ConnectionStatus() {
           className="hidden items-center gap-1 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[10px] font-bold text-accent sm:inline-flex"
           title="Oraret janë të ruajtura"
         >
-          ⚡ Modali Offline
+          ⚡ Modali Offline — Oraret janë të ruajtura
         </span>
       )}
       {!online && (

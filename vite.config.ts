@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from "vite-plugin-pwa";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
+import pdfAsset from "./src/assets/falja-namazit.pdf.asset.json";
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
@@ -28,6 +29,7 @@ export default defineConfig({
           globPatterns: ["**/*.{js,css,png,svg,ico,webmanifest,woff2}"],
           navigateFallback: null,
           cleanupOutdatedCaches: true,
+          additionalManifestEntries: [{ url: pdfAsset.url, revision: pdfAsset.asset_id }],
           runtimeCaching: [
             {
               urlPattern: ({ request, url }) =>
@@ -36,8 +38,18 @@ export default defineConfig({
               options: { cacheName: "vaktiaks-pages", networkTimeoutSeconds: 4 },
             },
             {
+              urlPattern: ({ url, sameOrigin }) => sameOrigin && /\.pdf$/.test(url.pathname),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "vaktiaks-documents",
+                rangeRequests: true,
+                cacheableResponse: { statuses: [200] },
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              },
+            },
+            {
               urlPattern: ({ url, sameOrigin }) =>
-                sameOrigin && (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/__l5e/assets-v1/")),
+                sameOrigin && (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/__l5e/assets-v1/") || /\.(?:png|svg|ico|woff2)$/.test(url.pathname)),
               handler: "CacheFirst",
               options: {
                 cacheName: "vaktiaks-assets",

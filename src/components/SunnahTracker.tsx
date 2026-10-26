@@ -70,6 +70,7 @@ export function SunnahModal({ onClose }: { onClose: () => void }) {
   const [board, setBoard] = useState<Row[]>([]);
   const [name, setName] = useState("");
   const [savedName, setSavedName] = useState("");
+  const [profileReady, setProfileReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const uid = session?.user.id;
@@ -87,11 +88,13 @@ export function SunnahModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!uid) { setDone(new Set()); setBoard([]); return; }
     void load();
+    setProfileReady(false);
     void supabase.from("profiles").select("display_name").eq("id", uid).maybeSingle().then(({ data, error }) => {
+      setProfileReady(true);
       if (error) { setErr("Emri nuk u ngarkua."); return; }
       setName(data?.display_name ?? ""); setSavedName(data?.display_name ?? "");
     });
-    const id = window.setInterval(() => { if (navigator.onLine) void load(); }, 30_000);
+    const id = window.setInterval(() => { if (navigator.onLine) void load(); }, 5_000);
     const ch = supabase.channel(`sunnah-${uid}`).on("postgres_changes", { event: "*", schema: "public", table: "sunnah_logs", filter: `user_id=eq.${uid}` }, () => void load()).subscribe();
     window.addEventListener("online", load);
     return () => { window.clearInterval(id); void supabase.removeChannel(ch); window.removeEventListener("online", load); };
@@ -130,8 +133,8 @@ export function SunnahModal({ onClose }: { onClose: () => void }) {
           <form onSubmit={(e) => { e.preventDefault(); void saveName(); }} className="space-y-2">
             <label htmlFor="leaderboard-name" className="text-sm font-semibold text-foreground">Emri në renditje</label>
             <div className="flex gap-2">
-              <input id="leaderboard-name" required maxLength={50} value={name} onChange={(e) => setName(e.target.value)} className="min-w-0 flex-1 rounded-md border border-primary/25 bg-surface px-3 py-2 text-sm text-foreground" />
-              <Button type="submit" disabled={busy || !name.trim() || name.trim() === savedName}><Save /> Ruaj</Button>
+              <input id="leaderboard-name" required disabled={!profileReady || busy} maxLength={50} value={name} onChange={(e) => setName(e.target.value)} className="min-w-0 flex-1 rounded-md border border-primary/25 bg-surface px-3 py-2 text-sm text-foreground" />
+              <Button type="submit" disabled={!profileReady || busy || !name.trim() || name.trim() === savedName}><Save /> Ruaj</Button>
             </div>
           </form>
           {err && <p role="alert" className="text-xs text-destructive">{err}</p>}

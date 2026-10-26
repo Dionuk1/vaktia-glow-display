@@ -12,6 +12,8 @@ import {
 import appCss from "../styles.css?url";
 import { useEffect } from "react";
 import { registerAppServiceWorker } from "@/lib/pwa-register";
+import { AuthSessionProvider } from "@/components/AuthSession";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -125,7 +127,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthSessionProvider>
+        <Outlet />
+        <Toaster position="top-center" />
+      </AuthSessionProvider>
     </QueryClientProvider>
   );
 }

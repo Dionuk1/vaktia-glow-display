@@ -6,8 +6,11 @@ function refused(): boolean {
   } catch {
     return true;
   }
-  const h = location.hostname;
-  if (h.startsWith("id-preview--") || h.startsWith("preview--")) return true;
+  const h = window.location.hostname.toLowerCase();
+  const platform = /\.(lovable\.app|gpt-eng\.com|gptengineer\.run)$/.test(h);
+  if (platform && /^(?:id-preview|preview)(?:-[a-z0-9]+)?--.+$/.test(h.split(".")[0])) return true;
+  if (platform && h.split(".")[0] === "project--9c207b4a-93be-4857-9b70-6ac7bc95bfa6-dev") return true;
+  if (h === "id-preview--9c207b4a-93be-4857-9b70-6ac7bc95bfa6.lovable.app") return true;
   if (/(^|\.)lovableproject(-dev)?\.com$/.test(h)) return true;
   if (/(^|\.)beta\.lovable\.dev$/.test(h)) return true;
   if (new URLSearchParams(location.search).get("sw") === "off") return true;

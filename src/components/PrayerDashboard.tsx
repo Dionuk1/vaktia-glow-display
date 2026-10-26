@@ -32,6 +32,7 @@ import {
   fetchLatestFromBIK,
   fetchLiveTodayFromBislame,
   getRemoteMeta,
+  KOSOVO_FRIDAY,
   type CityKey,
   type AlbaniaCityKey,
   type AnyCityKey,
@@ -475,7 +476,7 @@ export default function PrayerDashboard() {
           <div className="flex items-center justify-center gap-2 rounded-2xl bg-primary/10 ring-1 ring-primary/30 px-4 py-2 text-center text-xs sm:text-sm text-primary/90 backdrop-blur">
             <span className="size-2 rounded-full bg-primary animate-pulse" />
             <span className="font-medium">
-              Sot e Xhuma: Ligjërata (Hytbeja) në 12:45 · Namazi në 13:00
+              Sot e Xhuma: Ligjërata (Hytbeja) në {region === "Kosove" ? KOSOVO_FRIDAY.khutbah : "12:45"} · Namazi në {region === "Kosove" ? KOSOVO_FRIDAY.prayer : "13:00"}
             </span>
           </div>
         )}

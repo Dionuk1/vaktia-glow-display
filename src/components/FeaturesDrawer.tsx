@@ -1,4 +1,4 @@
-import { SunnahModal } from "./SunnahTracker";
+import { SunnahModal } from "@/components/SunnahTracker";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
@@ -19,7 +19,6 @@ import {
 import { useLang } from "@/lib/i18n";
 import {
   AnalyticsModal,
-  KazaModal,
   LanguageModal,
   MosqueModal,
   RekateModal,

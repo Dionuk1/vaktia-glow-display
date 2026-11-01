@@ -4,3 +4,4 @@
 - MCP server is defined in src/lib/mcp/ (one tool per file) and mounted at /mcp by mcpPlugin; never hand-write its generated routes.
 - BIK rows already include seasonal civil time; normalize source-year DST boundaries and stale live summer clocks rather than subtracting an hour twice.
 - Keep the app-wide auth session in one provider at the root; magic-link callbacks return to the public homepage and open the Sunnah tracker after session confirmation.
+- Chrome extension source lives in extension/ (plain MV3 JS, no bundler); scripts/build-extension.sh copies BIK data + icons into dist-extension/ and zips to public/ so the extension never drifts from app data.

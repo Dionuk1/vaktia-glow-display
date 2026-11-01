@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "VaktiaKS - Orari i Namazit",
+  "version": "1.0",
+  "description": "Oraret zyrtare të namazit (BIK) për Kosovë, numërimi deri te namazi i radhës dhe njoftime.",
+  "permissions": ["storage", "activeTab", "alarms", "notifications"],
+  "action": { "default_popup": "popup.html", "default_title": "VaktiaKS", "default_icon": { "192": "icon-192.png" } },
+  "background": { "service_worker": "background.js", "type": "module" },
+  "icons": { "192": "icon-192.png", "512": "icon-512.png" }
+}

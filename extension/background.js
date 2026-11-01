@@ -1,17 +1,18 @@
-import { LABELS, NOTIFY_KEYS, nextPrayer } from "./times.js";
+import { LABELS, NOTIFY_KEYS, DEFAULTS, cityLabel, nextPrayer } from "./times.js";
+async function settings(){ const { settings } = await chrome.storage.local.get("settings"); return { ...DEFAULTS, ...(settings||{}) }; }
 async function schedule(){
   await chrome.alarms.clearAll();
-  const { city="Prishtina", notify=false } = await chrome.storage.local.get(["city","notify"]);
-  if(!notify) return;
+  const s = await settings();
+  if(!s.notify) return;
   let now=new Date(),n;
   // Schedule the next notifiable prayer (skip Imsaku and sunrise).
-  do{ n=nextPrayer(now,city); now=new Date(n.at.getTime()+1000);}while(!NOTIFY_KEYS.includes(n.key));
+  do{ n=nextPrayer(now,s); now=new Date(n.at.getTime()+1000);}while(!NOTIFY_KEYS.includes(n.key));
   chrome.alarms.create(`prayer:${n.key}`,{when:n.at.getTime()});
 }
-chrome.alarms.onAlarm.addListener(a=>{
+chrome.alarms.onAlarm.addListener(async a=>{
   if(!a.name.startsWith("prayer:")) return;
-  const k=a.name.slice(7);
-  chrome.notifications.create({type:"basic",iconUrl:"icon-192.png",title:`Koha e ${LABELS[k]}`,message:"Ka hyrë koha e namazit — VaktiaKS"});
+  const k=a.name.slice(7), s=await settings();
+  chrome.notifications.create({type:"basic",iconUrl:"icon-192.png",title:`Koha e ${LABELS[k]}`,message:`Ka hyrë koha e namazit në ${cityLabel(s)} — VaktiaKS`,silent:!s.sound});
   schedule();
 });
 chrome.runtime.onInstalled.addListener(schedule);

@@ -1,0 +1,22 @@
+<!doctype html><html lang="sq"><head><meta charset="utf-8"><title>VaktiaKS</title>
+<style>
+:root{--bg:#0B1E24;--card:#18282E;--teal:#00D9A3;--lime:#B6FF2E;--fg:#E6F4F1;--mut:#8AA3A0}
+*{box-sizing:border-box}body{margin:0;width:380px;height:550px;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;padding:14px;overflow:hidden}
+header{display:flex;align-items:center;gap:10px}header img{width:36px;height:36px;border-radius:10px}
+h1{font-size:16px;margin:0}h1 span{color:var(--teal)}.mut{color:var(--mut);font-size:11px}
+select{margin-left:auto;background:var(--card);color:var(--fg);border:1px solid #00D9A355;border-radius:8px;padding:5px}
+.next{margin:12px 0;padding:12px;border-radius:14px;background:var(--card);border:1px solid #00D9A355;text-align:center}
+.cd{font-size:34px;font-weight:800;color:var(--lime);font-variant-numeric:tabular-nums}
+ul{list-style:none;padding:0;margin:0}li{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;font-size:14px}
+li:nth-child(odd){background:#ffffff08}li.on{background:#00D9A322;color:var(--teal);font-weight:700}
+.fri{margin-top:10px;padding:8px 12px;border-radius:10px;background:#B6FF2E14;color:var(--lime);font-size:12px}
+label{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px}
+a{color:var(--teal);font-size:11px;display:block;text-align:center;margin-top:8px}
+</style></head><body>
+<header><img src="icon-192.png" alt=""><div><h1>VAKTIA<span>KS</span></h1><div class="mut" id="date"></div></div><select id="city"></select></header>
+<div class="next"><div class="mut" id="nextLabel"></div><div class="cd" id="cd">--:--:--</div></div>
+<ul id="list"></ul>
+<div class="fri" id="fri"></div>
+<label><input type="checkbox" id="notify"> Njoftime për kohët e namazit</label>
+<a href="https://vaktia-ks.lovable.app" target="_blank">Hap VaktiaKS të plotë →</a>
+<script type="module" src="popup.js"></script></body></html>

@@ -6,7 +6,7 @@ export const NOTIFY_KEYS = ["sabahu","dreka","ikindia","akshami","jacia"];
 export const FRIDAY = { khutbah: "11:40", prayer: "12:00" };
 export const CITIES = { Decan:["Deçan",0], Gjakova:["Gjakovë",0], Peja:["Pejë",0], Prizreni:["Prizren",0], Mitrovica:["Mitrovicë",0], Sharri:["Sharr",2], Ferizaj:["Ferizaj",-1], Gjilan:["Gjilan",-1], Prishtina:["Prishtinë",-1], FusheKosova:["Fushë Kosovë",-1], Podujeva:["Podujevë",-1], Vushtrri:["Vushtrri",-1], Presheva:["Preshevë",-2] };
 export const AL_CITIES = Object.fromEntries(ALBANIA_CITIES.map(k=>[k,ALBANIA_CITY_LABELS[k]]));
-export const DEFAULTS = { region:"ks", city:"Prishtina", alCity:"Tirane", notify:false, sound:true, compact:false };
+export const DEFAULTS = { region:"ks", city:"Prishtina", alCity:"Tirane", notify:false, sound:true, beep:true, compact:false, offset:0, preAlert:0 };
 
 export function cityLabel(s){ return s.region==="al" ? AL_CITIES[s.alCity] : CITIES[s.city]?.[0]; }
 
@@ -17,12 +17,13 @@ const fmt=n=>`${String(Math.floor(n/60+24)%24).padStart(2,"0")}:${String(((n%60)
 /** s = settings object ({region, city, alCity}) or a Kosovo city key (legacy). */
 export function timesFor(date, s=DEFAULTS){
   if(typeof s==="string") s={region:"ks",city:s};
-  if(s.region==="al") return getAlbanianTimesForDate(date, s.alCity||"Tirane");
+  const adj=Number(s.offset)||0;
+  if(s.region==="al"){ const a=getAlbanianTimesForDate(date, s.alCity||"Tirane"),o={}; for(const k of KEYS) o[k]=fmt(toMin(a[k])+adj); return o; }
   const key=`${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
   const row=BIK[key]||BIK["02-28"];
   // BIK rows (2026) already contain civil DST; only correct for year differences.
   const season=(Number(summer(date))-Number(summer(new Date(2026,date.getMonth(),date.getDate()))))*60;
-  const off=(CITIES[s.city]?.[1]??0)+season; const out={};
+  const off=(CITIES[s.city]?.[1]??0)+season+adj; const out={};
   for(const k of KEYS) out[k]=fmt(toMin(row[k])+off);
   return out;
 }

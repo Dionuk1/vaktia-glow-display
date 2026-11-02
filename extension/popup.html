@@ -51,11 +51,16 @@ select{width:100%;background:var(--bg);color:var(--fg);border:1px solid #00D9A35
 <div class="ov" id="ov"><div class="panel" role="dialog" aria-label="Cilësimet">
   <h2>Cilësimet <button id="closeSettings" aria-label="Mbyll">✕</button></h2>
   <div class="field"><span>Shteti</span><div class="seg"><button data-region="ks">Kosovë</button><button data-region="al">Shqipëri</button></div></div>
-  <div class="field" id="ksField"><span>Qyteti (BIK)</span><select id="city"></select></div>
+  <div class="field" id="ksField"><span>Qyteti në Kosovë (BIK)</span><select id="city"></select></div>
   <div class="field" id="alField"><span>Qyteti / Këshilli (KMSH)</span><select id="alCity"></select></div>
-  <div class="field"><span>Preferencat</span>
+  <div class="field"><span>Llogaritja &amp; korrigjimi</span>
+    <label class="tg">Korrigjim i kohëve <select id="offset" style="width:110px"></select></label>
+    <label class="tg">Kujtesë para namazit <select id="preAlert" style="width:110px"><option value="0">Joaktive</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option></select></label>
+  </div>
+  <div class="field"><span>Zëri &amp; pamja</span>
     <label class="tg">Njoftime për namazet <input type="checkbox" class="sw" id="notify"></label>
     <label class="tg">Tingull në njoftime <input type="checkbox" class="sw" id="sound"></label>
+    <label class="tg">Bip kur hyn koha (popup) <input type="checkbox" class="sw" id="beep"></label>
     <label class="tg">Pamje kompakte <input type="checkbox" class="sw" id="compact"></label>
   </div>
   <div class="saved" id="saved">✓ U ruajt</div>
